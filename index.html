@@ -3,303 +3,252 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agenda Clínica — Daniel Marrero</title>
-
-  <!-- Firebase 10 compat CDN -->
+  <title>Agenda — Daniel Marrero Cosmetólogo</title>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root{--brand:#0284c7;--brand-soft:#e0f2fe;}
-    body{color:#0f172a;background:radial-gradient(circle at 10% 15%,#dbeafe 0%,transparent 25%),radial-gradient(circle at 90% 10%,#bae6fd 0%,transparent 22%),#f8fafc;}
+    :root{--blue:#1a56b0;--blue2:#1e40af;--blue-lt:#dbeafe;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#f1f5f9;color:#0f172a;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
 
-    /* ── Monthly calendar ── */
-    .day-cell{min-height:80px;transition:transform .12s,box-shadow .12s,border-color .12s;}
-    .day-cell:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(2,132,199,.15);}
-    .day-cell.selected{border-color:var(--brand);background:var(--brand-soft);box-shadow:0 0 0 2px rgba(2,132,199,.2);}
-    .day-cell.today-mark{border-color:#f59e0b;background:#fffbeb;}
+    /* NAV */
+    #topNav{background:var(--blue);color:#fff;height:54px;display:flex;align-items:center;padding:0 16px;gap:0;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.25);}
+    #topNav .logo{font-weight:800;font-size:15px;letter-spacing:.3px;margin-right:20px;white-space:nowrap;}
+    .nav-tab{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 14px;cursor:pointer;border-radius:6px;transition:background .12s;font-size:11px;font-weight:600;color:rgba(255,255,255,.75);}
+    .nav-tab i{font-size:18px;}
+    .nav-tab:hover{background:rgba(255,255,255,.12);color:#fff;}
+    .nav-tab.active{background:rgba(255,255,255,.2);color:#fff;}
+    #topNav .sp{flex:1;}
+    #userBadge{font-size:11px;color:rgba(255,255,255,.8);background:rgba(255,255,255,.15);border-radius:6px;padding:4px 10px;display:flex;align-items:center;gap:5px;}
+    #syncDot{width:7px;height:7px;border-radius:50%;background:#4ade80;display:inline-block;}
 
-    /* ── Weekly grid ── */
-    .wg-table{border-collapse:collapse;min-width:700px;width:100%;}
-    .wg-table th,.wg-table td{border:1px solid #e2e8f0;padding:0;}
-    .wg-table .wg-hour{position:sticky;left:0;z-index:2;background:#f8fafc;min-width:52px;font-size:11px;font-weight:700;color:#475569;text-align:center;padding:4px 2px;}
-    .wg-table thead th{position:sticky;top:0;z-index:3;background:#f0f9ff;padding:6px 4px;text-align:center;font-size:11px;min-width:110px;}
-    .wg-table thead th.wg-today-hd{background:#fef9c3;border-color:#f59e0b;}
-    .wg-table thead th.wg-sel-hd{background:#e0f2fe;border-color:#0284c7;}
-    .wg-cell{height:38px;padding:3px;cursor:pointer;transition:background .1s;}
-    .wg-empty{height:100%;border:1px dashed #cbd5e1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#cbd5e1;}
-    .wg-empty:hover{border-color:#94a3b8;background:#f1f5f9;}
-    .wg-pat{height:100%;border:1px solid;border-radius:5px;padding:3px 5px;font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;}
-    .wg-pat.s-pending  {background:#eff6ff;border-color:#93c5fd;color:#1e40af;}
-    .wg-pat.s-confirmed{background:#dcfce7;border-color:#4ade80;color:#14532d;}
-    .wg-pat.s-cancelled{background:#fee2e2;border-color:#fca5a5;color:#7f1d1d;text-decoration:line-through;}
-    .wg-pat.s-rescheduled{background:#ffedd5;border-color:#fdba74;color:#7c2d12;}
+    /* TOOLBAR */
+    #toolbar{height:46px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;padding:0 14px;gap:8px;flex-shrink:0;}
+    .tb-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid #cbd5e1;background:#fff;color:#374151;transition:all .12s;}
+    .tb-btn:hover{background:#f1f5f9;border-color:#94a3b8;}
+    .tb-btn.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+    #dateLabel{font-weight:700;font-size:13px;min-width:110px;text-align:center;}
+    #profBadge{font-size:12px;font-weight:700;color:var(--blue);background:var(--blue-lt);border:1px solid #bfdbfe;border-radius:6px;padding:4px 12px;}
 
-    /* ── Schedule table ── */
-    .slot-input{width:100%;border:1px solid #cbd5e1;border-radius:.45rem;padding:.38rem .5rem;font-size:.82rem;background:#fff;}
-    .slot-input:focus{outline:none;border-color:#0284c7;box-shadow:0 0 0 3px rgba(2,132,199,.12);}
-    tr.row-confirmed td{background:#f0fdf4;}
-    tr.row-cancelled td{background:#fef2f2;}
-    tr.row-rescheduled td{background:#fff7ed;}
-    tr.row-occupied td.col-hora{background:#fee2e2;}
-    tr.row-paid td.col-split{background:#fef9c3;}
-    .sticky-head{position:sticky;top:0;z-index:30;background:#fff;}
+    /* CALENDAR */
+    #calWrap{flex:1;overflow:auto;}
+    .cal-table{border-collapse:collapse;width:100%;min-width:700px;}
+    .cal-table th,.cal-table td{border:1px solid #e2e8f0;}
+    .cal-table th.time-th{position:sticky;top:0;left:0;z-index:4;background:#f8fafc;width:60px;min-width:60px;font-size:11px;color:#64748b;}
+    .cal-table thead th{position:sticky;top:0;z-index:3;background:#f8fafc;text-align:center;padding:8px 6px;font-size:12px;}
+    .cal-table thead th.today-col{background:#fef9c3;color:#92400e;}
+    .cal-table thead th.sel-col{background:var(--blue-lt);color:var(--blue2);}
+    .cal-table .time-cell{position:sticky;left:0;z-index:2;background:#f8fafc;text-align:right;padding:0 6px;font-size:11px;font-weight:600;color:#64748b;white-space:nowrap;}
+    .slot-td{padding:2px;height:46px;vertical-align:top;min-width:120px;}
+    .slot-empty{height:100%;border:1px dashed transparent;border-radius:5px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#cbd5e1;font-size:18px;transition:all .1s;}
+    .slot-empty:hover{border-color:#94a3b8;background:#f8fafc;color:#64748b;}
+    .slot-appt{height:100%;border-radius:5px;padding:3px 6px;cursor:pointer;border-left:3px solid;overflow:hidden;transition:filter .1s;}
+    .slot-appt:hover{filter:brightness(.95);}
+    .slot-appt.s-pending   {background:#eff6ff;border-color:#3b82f6;color:#1e3a8a;}
+    .slot-appt.s-confirmed {background:#dcfce7;border-color:#16a34a;color:#14532d;}
+    .slot-appt.s-cancelled {background:#fee2e2;border-color:#dc2626;color:#7f1d1d;text-decoration:line-through;}
+    .slot-appt.s-rescheduled{background:#ffedd5;border-color:#ea580c;color:#7c2d12;}
+    .slot-name{font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .slot-type{font-size:10px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-    /* ── Move modal ── */
-    .week-strip{display:grid;grid-template-columns:repeat(7,minmax(150px,1fr));gap:.6rem;overflow-x:auto;padding-bottom:.25rem;}
-    .week-day-card{border:1px solid #dbeafe;border-radius:.75rem;background:#fff;padding:.6rem;min-height:120px;}
-    .week-day-card.selected{border-color:#0284c7;box-shadow:0 0 0 2px rgba(2,132,199,.15);background:#f0f9ff;}
-    .move-day-cell{min-height:78px;border:1px solid #cbd5e1;border-radius:.7rem;text-align:left;padding:.4rem;background:#fff;font-size:.8rem;}
-    .move-day-cell:hover{border-color:#0ea5e9;}
-    .move-day-cell.selected{border-color:#0284c7;background:#e0f2fe;}
-    .move-hour-btn{width:100%;border-radius:.55rem;padding:.28rem .4rem;border:1px solid #cbd5e1;font-size:.72rem;font-weight:700;}
-    .move-hour-btn.free{background:#fff;color:#0f172a;}
-    .move-hour-btn.occupied{background:#fee2e2;border-color:#fca5a5;color:#7f1d1d;}
+    /* APPOINTMENT MODAL */
+    .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:60;display:flex;align-items:center;justify-content:center;padding:12px;}
+    .modal-box{background:#fff;border-radius:14px;width:min(460px,100%);box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;}
+    .modal-hd{background:var(--blue);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;}
+    .modal-hd h3{font-weight:700;font-size:15px;}
+    .modal-body{padding:18px;display:flex;flex-direction:column;gap:12px;}
+    .field-group{display:flex;flex-direction:column;gap:4px;}
+    .field-group label{font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.4px;}
+    .fi{width:100%;border:1px solid #cbd5e1;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;transition:border .15s;}
+    .fi:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,86,176,.12);}
+    .fi-sm{padding:5px 8px;font-size:12px;}
+    .status-pills{display:flex;gap:6px;}
+    .st-pill{flex:1;border:2px solid #e2e8f0;border-radius:8px;padding:6px 4px;text-align:center;font-size:11px;font-weight:700;cursor:pointer;transition:all .12s;}
+    .st-pill:hover{border-color:#94a3b8;}
+    .st-pill.active-pending   {background:#eff6ff;border-color:#3b82f6;color:#1e3a8a;}
+    .st-pill.active-confirmed {background:#dcfce7;border-color:#16a34a;color:#14532d;}
+    .st-pill.active-cancelled {background:#fee2e2;border-color:#dc2626;color:#7f1d1d;}
+    .st-pill.active-rescheduled{background:#ffedd5;border-color:#ea580c;color:#7c2d12;}
+    .modal-ft{padding:12px 18px;border-top:1px solid #f1f5f9;display:flex;align-items:center;gap:8px;}
+    .btn-save{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:8px 20px;font-weight:700;font-size:13px;cursor:pointer;flex:1;}
+    .btn-save:hover{background:var(--blue2);}
+    .btn-del{background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:8px 14px;font-weight:700;font-size:12px;cursor:pointer;}
+    .btn-del:hover{background:#fecaca;}
+    .btn-cancel{background:#f1f5f9;color:#64748b;border:none;border-radius:8px;padding:8px 14px;font-weight:600;font-size:12px;cursor:pointer;}
 
-    /* ── Patient modal ── */
-    .visit-row{border-left:3px solid;padding:8px 10px;border-radius:0 6px 6px 0;margin-bottom:6px;}
-    .visit-row.s-confirmed{border-color:#4ade80;background:#f0fdf4;}
-    .visit-row.s-cancelled{border-color:#fca5a5;background:#fef2f2;}
-    .visit-row.s-rescheduled{border-color:#fdba74;background:#fff7ed;}
-    .visit-row.s-pending{border-color:#93c5fd;background:#eff6ff;}
+    /* AUTOCOMPLETE DROPDOWN */
+    #acDrop{position:absolute;background:#fff;border:1px solid #e2e8f0;border-radius:9px;box-shadow:0 8px 30px rgba(0,0,0,.15);z-index:9999;max-height:240px;overflow-y:auto;width:100%;}
+    .ac-item{padding:8px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9;transition:background .1s;}
+    .ac-item:last-child{border-bottom:none;}
+    .ac-item:hover,.ac-item.ac-active{background:#eff6ff;}
+    .ac-name{font-weight:700;font-size:13px;color:#0f172a;}
+    .ac-meta{font-size:11px;color:#64748b;margin-top:1px;}
+    .ac-new{color:var(--blue);font-weight:600;font-size:12px;display:flex;align-items:center;gap:5px;}
+
+    /* PATIENTS VIEW */
+    #viewPacientes .pat-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;cursor:pointer;transition:box-shadow .12s;}
+    #viewPacientes .pat-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);border-color:#93c5fd;}
+
+    /* FINANCES VIEW */
+    .stat-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;}
+    .stat-val{font-size:24px;font-weight:800;color:var(--blue);}
+    .stat-lbl{font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;}
+
+    /* SETUP BANNER */
+    #setupBanner{background:#fef9c3;border-bottom:1px solid #fbbf24;padding:6px 14px;font-size:11px;color:#92400e;text-align:center;flex-shrink:0;}
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar{width:6px;height:6px}
+    ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
 
     /* Spinner */
     @keyframes spin{to{transform:rotate(360deg)}}
-    .spinner{width:20px;height:20px;border:3px solid #bae6fd;border-top-color:#0284c7;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
+    .spin{animation:spin .7s linear infinite;display:inline-block;width:16px;height:16px;border:2px solid #bfdbfe;border-top-color:var(--blue);border-radius:50%;}
   </style>
 </head>
 <body>
 
-<!-- ═══ SETUP BANNER ══════════════════════════════════════════════════ -->
-<div id="setupBanner" class="hidden bg-amber-100 border-b border-amber-300 px-4 py-3 text-sm text-amber-900 text-center">
-  ⚠️ <strong>Firebase no configurado.</strong> Los datos se guardan solo en este navegador.
-  Para sincronización entre dispositivos, reemplaza <code>FIREBASE_CONFIG</code> con tus credenciales de
-  <a href="https://console.firebase.google.com" target="_blank" rel="noopener noreferrer" class="underline font-bold">console.firebase.google.com</a>
+<!-- SETUP BANNER -->
+<div id="setupBanner" class="hidden">
+  ⚠️ Firebase no configurado — trabajando en modo local (solo este dispositivo).
+  Para sincronización multi-dispositivo: completa FIREBASE_CONFIG en el código.
 </div>
 
-<!-- ═══ LOGIN ════════════════════════════════════════════════════════ -->
-<div id="loginScreen" class="min-h-screen flex items-center justify-center">
-  <div class="bg-white rounded-2xl shadow-2xl border border-sky-100 p-8 w-full max-w-sm">
-    <div class="text-center mb-6">
-      <div class="text-4xl mb-2">💆</div>
-      <h1 class="text-2xl font-extrabold text-sky-800">Agenda Clínica</h1>
-      <p class="text-slate-500 text-sm mt-1">Daniel Marrero · Cosmetólogo</p>
+<!-- TOP NAV -->
+<nav id="topNav">
+  <div class="logo">💆 Daniel Marrero</div>
+  <div class="nav-tab active" id="tabAgenda" onclick="showView('agenda')">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Agenda
+  </div>
+  <div class="nav-tab" id="tabPacientes" onclick="showView('pacientes')">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Pacientes
+  </div>
+  <div class="nav-tab" id="tabFinanzas" onclick="showView('finanzas')">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    Finanzas
+  </div>
+  <div class="sp"></div>
+  <div id="userBadge">
+    <span id="syncDot"></span>
+    <span id="userDisplay">Daniel Marrero</span>
+  </div>
+</nav>
+
+<!-- TOOLBAR (only for agenda) -->
+<div id="toolbar">
+  <button class="tb-btn" onclick="prevWeek()">&#8592;</button>
+  <span id="dateLabel"></span>
+  <button class="tb-btn" onclick="nextWeek()">&#8594;</button>
+  <button class="tb-btn" onclick="goToday()" style="margin-left:4px">Hoy</button>
+  <div style="flex:1"></div>
+  <span id="profBadge">Daniel Marrero · Cosmetólogo</span>
+</div>
+
+<!-- VIEWS -->
+<div id="viewAgenda" style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+  <div id="calWrap"><div id="calInner"></div></div>
+</div>
+
+<div id="viewPacientes" class="hidden" style="flex:1;overflow-y:auto;padding:20px;">
+  <div class="max-w-4xl mx-auto">
+    <div class="flex items-center justify-between mb-4">
+      <h2 style="font-size:18px;font-weight:800;color:#1e3a8a">Pacientes</h2>
+      <input id="patSearch" type="text" placeholder="🔍  Buscar paciente..." oninput="renderPacientes()"
+        style="border:1px solid #cbd5e1;border-radius:8px;padding:7px 14px;font-size:13px;width:260px;outline:none;">
     </div>
-    <form onsubmit="doLogin(event)" class="space-y-4">
-      <div>
-        <label class="block text-xs font-semibold text-slate-600 mb-1">Correo electrónico</label>
-        <input id="loginEmail" type="email" required autocomplete="username"
-          class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
-          placeholder="correo@ejemplo.com">
-      </div>
-      <div>
-        <label class="block text-xs font-semibold text-slate-600 mb-1">Contraseña</label>
-        <input id="loginPassword" type="password" required autocomplete="current-password"
-          class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
-          placeholder="••••••••">
-      </div>
-      <div id="loginError" class="hidden text-red-600 text-xs bg-red-50 rounded-lg px-3 py-2"></div>
-      <button type="submit" id="loginBtn"
-        class="w-full bg-sky-700 hover:bg-sky-800 text-white font-bold py-2.5 px-4 rounded-xl transition-colors flex items-center justify-center gap-2">
-        Ingresar
-      </button>
-      <p id="localModeHint" class="hidden text-center text-xs text-slate-500">
-        (Sin Firebase activo — acceso local sin contraseña)
-      </p>
-    </form>
+    <div id="patList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
   </div>
 </div>
 
-<!-- ═══ MAIN APP ══════════════════════════════════════════════════════ -->
-<div id="mainApp" class="hidden max-w-7xl mx-auto px-4 py-5 md:px-6 space-y-4">
-
-  <!-- Header -->
-  <header class="bg-white rounded-2xl border border-sky-100 shadow-lg p-4 md:p-5">
-    <div class="flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <h1 class="text-2xl md:text-3xl font-extrabold text-sky-800">Agenda Clínica</h1>
-        <p class="text-slate-600"><span class="text-xl md:text-2xl font-extrabold text-sky-900">Daniel Marrero</span> · Control de pacientes y reparto automático</p>
-      </div>
-      <div class="flex items-center gap-2 flex-wrap">
-        <div id="syncStatus" class="text-xs bg-green-50 border border-green-200 text-green-800 rounded-xl px-3 py-1.5 font-semibold">
-          ● Sincronizado
-        </div>
-        <div class="text-xs text-slate-500 bg-sky-50 border border-sky-100 rounded-xl px-3 py-1.5">
-          <span id="userDisplay" class="font-semibold"></span>
-        </div>
-        <button onclick="doLogout()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-xl font-semibold">Cerrar sesión</button>
-      </div>
-    </div>
-  </header>
-
-  <!-- Monthly + Stats -->
-  <section class="grid lg:grid-cols-3 gap-4">
-    <article class="lg:col-span-2 bg-white rounded-2xl border border-sky-100 shadow-lg p-4">
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <div class="flex items-center gap-2">
-          <button id="prevMonthBtn" class="bg-sky-700 hover:bg-sky-800 text-white px-3 py-2 rounded-lg text-sm">◀</button>
-          <h2 id="monthLabel" class="text-lg md:text-xl font-bold text-sky-800 min-w-[230px] capitalize"></h2>
-          <button id="nextMonthBtn" class="bg-sky-700 hover:bg-sky-800 text-white px-3 py-2 rounded-lg text-sm">▶</button>
-        </div>
-        <button id="todayBtn" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-sm font-semibold">Hoy</button>
-      </div>
-      <div class="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500 mb-2">
-        <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
-      </div>
-      <div id="monthGrid" class="grid grid-cols-7 gap-1"></div>
-    </article>
-    <article class="bg-white rounded-2xl border border-sky-100 shadow-lg p-4">
-      <h3 class="text-lg font-bold text-sky-800 mb-3">Resumen total</h3>
-      <div class="space-y-2 text-sm">
-        <div class="bg-slate-50 rounded-lg p-2.5"><span class="text-slate-500">Atenciones:</span> <strong id="allCount">0</strong></div>
-        <div class="bg-slate-50 rounded-lg p-2.5"><span class="text-slate-500">Total cobrado:</span> <strong id="allGross">$0</strong></div>
-        <div class="bg-sky-50 rounded-lg p-2.5"><span class="text-slate-500">Daniel Marrero:</span> <strong id="allDaniel" class="text-sky-700">$0</strong></div>
-        <div class="bg-slate-50 rounded-lg p-2.5"><span class="text-slate-500">Clínica M.E. Sanchez:</span> <strong id="allClinic">$0</strong></div>
-        <div class="bg-slate-50 rounded-lg p-2.5"><span class="text-slate-500">Clínica ABBA:</span> <strong id="allDoctors">$0</strong></div>
-      </div>
-    </article>
-  </section>
-
-  <!-- ══ WEEKLY GRID — horas hacia abajo ══ -->
-  <section class="bg-white rounded-2xl border border-sky-100 shadow-lg p-4">
-    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-      <h3 class="text-lg font-bold text-sky-800">Semana de trabajo</h3>
-      <div class="flex items-center gap-3 flex-wrap">
-        <div class="flex items-center gap-1.5 text-xs text-slate-500">
-          <span class="inline-block w-3 h-3 rounded bg-green-200 border border-green-400"></span>Confirmado
-          <span class="inline-block w-3 h-3 rounded bg-red-200 border border-red-400 ml-2"></span>Cancelado
-          <span class="inline-block w-3 h-3 rounded bg-orange-200 border border-orange-400 ml-2"></span>Reprogramado
-          <span class="inline-block w-3 h-3 rounded bg-blue-100 border border-blue-300 ml-2"></span>Pendiente
-        </div>
-        <span id="weeklyLabel" class="text-xs bg-sky-50 text-sky-700 border border-sky-100 rounded-lg px-2 py-1 font-semibold"></span>
-      </div>
-    </div>
-    <div class="overflow-x-auto" style="max-height:400px;overflow-y:auto;">
-      <div id="weeklyGrid"></div>
-    </div>
-  </section>
-
-  <!-- ══ DAILY AGENDA TABLE ══ -->
-  <section class="bg-white rounded-2xl border border-sky-100 shadow-lg overflow-hidden">
-    <div class="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
-      <div>
-        <h3 class="text-xl font-bold text-sky-800">Agenda del día</h3>
-        <p id="selectedDayLabel" class="text-slate-600 text-sm">Selecciona un día del calendario</p>
-      </div>
-      <div class="text-xs bg-amber-50 border border-amber-200 text-amber-800 rounded-lg px-2 py-1">
-        * Completa paciente, tipo y monto. El reparto se calcula solo.
-      </div>
-    </div>
-    <div class="overflow-auto" style="max-height:65vh">
-      <table class="w-full text-sm" style="min-width:1050px">
-        <thead class="sticky-head border-b border-slate-200">
-          <tr class="text-left text-slate-600 text-xs uppercase tracking-wide">
-            <th class="p-2 w-14">Hora</th>
-            <th class="p-2">Paciente</th>
-            <th class="p-2 w-32">Estado</th>
-            <th class="p-2 w-28">Gestión</th>
-            <th class="p-2">Tipo de atención</th>
-            <th class="p-2 w-36">Origen</th>
-            <th class="p-2 w-28">Monto</th>
-            <th class="p-2 w-24">Daniel</th>
-            <th class="p-2 w-28">Clínica M.E.S.</th>
-            <th class="p-2 w-24">ABBA</th>
-          </tr>
-        </thead>
-        <tbody id="scheduleBody"></tbody>
-      </table>
-    </div>
-    <div class="grid md:grid-cols-4 gap-2 p-4 border-t border-slate-100 bg-slate-50 text-sm">
-      <div>Total día: <strong id="dayGross">$0</strong></div>
-      <div>Daniel: <strong id="dayDaniel">$0</strong></div>
-      <div>Clínica MES: <strong id="dayClinic">$0</strong></div>
-      <div>ABBA: <strong id="dayDoctors">$0</strong></div>
-    </div>
-  </section>
-
-  <!-- Annual view -->
-  <section class="bg-white rounded-2xl border border-sky-100 shadow-lg p-4">
-    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-      <h3 class="text-lg font-bold text-sky-800">Vista anual</h3>
-      <span id="yearLabel" class="text-sm bg-sky-50 text-sky-700 border border-sky-100 rounded-lg px-2 py-1 font-semibold"></span>
-    </div>
-    <div id="annualGrid" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3"></div>
-  </section>
-
+<div id="viewFinanzas" class="hidden" style="flex:1;overflow-y:auto;padding:20px;">
+  <div class="max-w-4xl mx-auto" id="finContent"></div>
 </div>
 
-<!-- ═══ PATIENT PROFILE MODAL ═══════════════════════════════════════ -->
-<div id="patientModal" class="hidden fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
-  <div class="bg-white rounded-2xl shadow-2xl border border-sky-100 w-full max-w-xl max-h-[90vh] overflow-auto">
-    <div class="p-4 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white z-10">
-      <div>
-        <h3 class="text-lg font-bold text-sky-800">Ficha de paciente</h3>
-        <p id="patientModalName" class="text-sky-700 font-semibold"></p>
-      </div>
-      <button onclick="closePatientModal()" class="bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-lg text-sm font-semibold">✕ Cerrar</button>
+<!-- ══ APPOINTMENT MODAL ══ -->
+<div id="apptModal" class="modal-bg hidden">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <h3 id="apptModalTitle">Nueva cita</h3>
+      <button onclick="closeApptModal()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:16px;">✕</button>
     </div>
-    <div id="patientModalContent" class="p-4 space-y-4"></div>
+    <div class="modal-body">
+      <!-- Patient autocomplete -->
+      <div class="field-group" style="position:relative">
+        <label>Paciente</label>
+        <input id="apptPatient" class="fi" type="text" placeholder="Escriba el nombre del paciente..."
+          oninput="onPatientInput()" onkeydown="onPatientKeydown(event)" autocomplete="off">
+        <div id="acDrop" class="hidden"></div>
+      </div>
+      <!-- Status -->
+      <div class="field-group">
+        <label>Estado</label>
+        <div class="status-pills">
+          <div class="st-pill" data-st="pending"     onclick="selectStatus('pending')">⬛ Pendiente</div>
+          <div class="st-pill" data-st="confirmed"   onclick="selectStatus('confirmed')">✅ Confirmado</div>
+          <div class="st-pill" data-st="cancelled"   onclick="selectStatus('cancelled')">❌ Cancelado</div>
+          <div class="st-pill" data-st="rescheduled" onclick="selectStatus('rescheduled')">🔄 Reprogramado</div>
+        </div>
+      </div>
+      <!-- Type + origin in row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="field-group">
+          <label>Tipo de atención</label>
+          <input id="apptType" class="fi" type="text" placeholder="Facial, masaje...">
+        </div>
+        <div class="field-group">
+          <label>Origen</label>
+          <select id="apptOrigin" class="fi">
+            <option value="propio">Paciente de Daniel</option>
+            <option value="doctoraA">Clínica M.E. Sanchez</option>
+            <option value="doctoraB">Clínica ABBA</option>
+          </select>
+        </div>
+      </div>
+      <!-- Amount -->
+      <div class="field-group">
+        <label>Monto ($)</label>
+        <input id="apptAmount" class="fi" type="number" min="0" placeholder="0" oninput="updateSplitPreview()">
+      </div>
+      <!-- Split preview -->
+      <div id="splitPreview" class="hidden" style="background:#f8fafc;border-radius:8px;padding:10px;font-size:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;">
+        <div><div style="color:#64748b">Daniel</div><strong id="spDaniel" style="color:#1d4ed8">$0</strong></div>
+        <div><div style="color:#64748b">Clínica MES</div><strong id="spClinic" style="color:#7c3aed">$0</strong></div>
+        <div><div style="color:#64748b">ABBA</div><strong id="spAbba" style="color:#be185d">$0</strong></div>
+      </div>
+      <!-- Notes -->
+      <div class="field-group">
+        <label>Notas (opcional)</label>
+        <textarea id="apptNotes" class="fi" rows="2" placeholder="Observaciones..." style="resize:vertical"></textarea>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn-del hidden" id="apptDelBtn" onclick="deleteAppt()">🗑 Eliminar</button>
+      <button class="btn-cancel" onclick="closeApptModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveAppt()">Guardar cita</button>
+    </div>
   </div>
 </div>
 
-<!-- ═══ MOVE MODAL ════════════════════════════════════════════════════ -->
-<div id="moveModal" class="hidden fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
-  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-auto">
-    <div class="p-4 border-b border-slate-200 flex items-center justify-between">
-      <div>
-        <h3 class="text-lg font-bold text-sky-800">Modificar hora de paciente</h3>
-        <p id="moveSourceInfo" class="text-sm text-slate-600"></p>
-      </div>
-      <button id="closeMoveModalBtn" class="bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-lg text-sm font-semibold">Cerrar</button>
+<!-- ══ PATIENT PROFILE MODAL ══ -->
+<div id="patModal" class="modal-bg hidden">
+  <div class="modal-box" style="max-width:520px;max-height:90vh;overflow:auto;">
+    <div class="modal-hd">
+      <h3 id="patModalName">Ficha de paciente</h3>
+      <button onclick="closePatModal()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:16px;">✕</button>
     </div>
-    <div class="p-4 space-y-4">
-      <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-          <div class="flex items-center gap-2">
-            <button id="movePrevMonthBtn" class="bg-sky-700 text-white px-3 py-1.5 rounded-lg text-sm">◀</button>
-            <h4 id="moveMonthLabel" class="font-bold text-sky-800 min-w-[200px]"></h4>
-            <button id="moveNextMonthBtn" class="bg-sky-700 text-white px-3 py-1.5 rounded-lg text-sm">▶</button>
-          </div>
-        </div>
-        <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold text-slate-500 mb-2">
-          <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
-        </div>
-        <div id="moveMonthGrid" class="grid grid-cols-7 gap-1"></div>
-      </div>
-      <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
-        <div class="flex items-center justify-between gap-2 mb-2">
-          <h4 class="font-bold text-sky-800">Semana disponible</h4>
-          <span id="moveWeekLabel" class="text-xs bg-sky-100 text-sky-700 px-2 py-1 rounded"></span>
-        </div>
-        <div id="moveWeekDays" class="week-strip"></div>
-      </div>
-    </div>
+    <div id="patModalContent" style="padding:18px;"></div>
   </div>
 </div>
 
 <script>
-// ════════════════════════════════════════════════════════════════════
-// FIREBASE CONFIG
-// INSTRUCCIONES:
-//  1. Ve a https://console.firebase.google.com
-//  2. Crea proyecto → "daniel-marrero-agenda"
-//  3. Authentication → Métodos de inicio → Correo/contraseña → Activar
-//  4. Firestore Database → Crear base de datos → Modo producción
-//     Reglas de seguridad (pegar en Firestore Rules):
-//       rules_version = '2';
-//       service cloud.firestore {
-//         match /databases/{database}/documents {
-//           match /{document=**} {
-//             allow read, write: if request.auth != null;
-//           }
-//         }
-//       }
-//  5. Configuración → Aplicaciones web → Agregar app → Copiar firebaseConfig
-//  6. Reemplaza los valores "REEMPLAZAR_..." abajo con los tuyos
-//  7. En Authentication → Users → Agregar usuario (para cada persona que usará la app)
-// ════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
+// FIREBASE CONFIG — reemplaza los valores REEMPLAZAR_...
+// Ver instrucciones en: https://console.firebase.google.com
+// ════════════════════════════════════════════════════════════
 const FIREBASE_CONFIG = {
   apiKey:            "REEMPLAZAR_API_KEY",
   authDomain:        "REEMPLAZAR.firebaseapp.com",
@@ -309,631 +258,443 @@ const FIREBASE_CONFIG = {
   appId:             "REEMPLAZAR_APP_ID"
 };
 
-// ═══ CONSTANTS ═══
+// ════ CONSTANTS ════
 const STORAGE_KEY = 'agendaDanielMarrero.v1';
 const ORIGINS = {
-  propio:   { label:'Paciente de Daniel Marrero',        daniel:.80, clinic:.20, doctor:0 },
-  doctoraA: { label:'Derivado Clínica Maria Elena Sanchez', daniel:.75, clinic:.25, doctor:0 },
-  doctoraB: { label:'Derivado Clínica ABBA',             daniel:.20, clinic:0,   doctor:.80 }
+  propio:   {label:'Paciente de Daniel Marrero',          daniel:.80,clinic:.20,doctor:0},
+  doctoraA: {label:'Derivado Clínica Maria Elena Sanchez', daniel:.75,clinic:.25,doctor:0},
+  doctoraB: {label:'Derivado Clínica ABBA',               daniel:.20,clinic:0,  doctor:.80}
 };
 const STATUS_CFG = {
-  pending:     { label:'⬛ Pendiente',    cls:'s-pending' },
-  confirmed:   { label:'✅ Confirmado',   cls:'s-confirmed' },
-  cancelled:   { label:'❌ Cancelado',    cls:'s-cancelled' },
-  rescheduled: { label:'🔄 Reprogramado', cls:'s-rescheduled' }
+  pending:     {label:'⬛ Pendiente',    pill:'active-pending'},
+  confirmed:   {label:'✅ Confirmado',   pill:'active-confirmed'},
+  cancelled:   {label:'❌ Cancelado',    pill:'active-cancelled'},
+  rescheduled: {label:'🔄 Reprogramado', pill:'active-rescheduled'}
 };
-const HOURS = Array.from({length:14},(_,i)=>i+8);
+const HOURS = Array.from({length:14},(_,i)=>i+8); // 08:00 – 21:00
 
-// ═══ FIREBASE INIT ═══
-let db=null, fbAuth=null, fbAvailable=false, unsubSchedule=null;
-const isConfigured = !FIREBASE_CONFIG.apiKey.startsWith('REEMPLAZAR');
+// ════ FIREBASE ════
+let db=null, fbAuth=null, fbOK=false, unsubSchedule=null;
+const fbConfigured = !FIREBASE_CONFIG.apiKey.startsWith('REEMPLAZAR');
+if(fbConfigured){
+  try{ firebase.initializeApp(FIREBASE_CONFIG); db=firebase.firestore(); fbAuth=firebase.auth(); fbOK=true; }
+  catch(e){ console.warn('Firebase:',e); }
+} else {
+  document.getElementById('setupBanner').classList.remove('hidden');
+}
 
-try {
-  if(isConfigured){
-    firebase.initializeApp(FIREBASE_CONFIG);
-    db = firebase.firestore();
-    fbAuth = firebase.auth();
-    fbAvailable = true;
-  } else {
-    document.getElementById('setupBanner').classList.remove('hidden');
-    document.getElementById('localModeHint').classList.remove('hidden');
-  }
-} catch(e){ console.warn('Firebase init error:',e); }
-
-// ═══ STATE ═══
+// ════ STATE ════
 const today = new Date();
 const state = {
-  currentDate:     new Date(today.getFullYear(), today.getMonth(), 1),
-  selectedDateKey: toDateKey(today),
-  appointments:    {},
-  movePickerDate:  new Date(),
-  moveTargetDateKey: null,
-  moveContext:     null,
-  currentUser:     null,
-  writing:         false
+  weekStart:    getWeekStart(today),
+  selectedDate: toDateKey(today),
+  appointments: {},
+  writing:      false
 };
 
-// ═══ UTILS ═══
+// ════ UTILS ════
 function toDateKey(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
 function parseDateKey(k){ const[y,m,d]=k.split('-').map(Number); return new Date(y,m-1,d); }
 function pad(n){ return String(n).padStart(2,'0'); }
 function money(n){ return new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:0}).format(n||0); }
 function escH(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function getWeekStart(date){ const d=new Date(date); d.setDate(d.getDate()-((d.getDay()+6)%7)); d.setHours(0,0,0,0); return d; }
+function splitAmount(amount,origin){ const r=ORIGINS[origin]||ORIGINS.propio; return {daniel:amount*r.daniel,clinic:amount*r.clinic,doctor:amount*r.doctor}; }
 
-function splitAmount(amount,origin){
-  const r=ORIGINS[origin]||ORIGINS.propio;
-  return {daniel:amount*r.daniel, clinic:amount*r.clinic, doctor:amount*r.doctor};
-}
-function splitCellHtml(amount,pct){
-  return `<div>${money(amount)}</div><div class="text-[10px] text-slate-400">${Math.round((pct||0)*100)}%</div>`;
-}
-function getWeekStart(date){
-  const d=new Date(date);
-  d.setDate(d.getDate()-((d.getDay()+6)%7));
-  d.setHours(0,0,0,0);
-  return d;
-}
-
-// ═══ AUTH ═══
-async function doLogin(e){
-  e.preventDefault();
-  const btn=document.getElementById('loginBtn');
-  btn.innerHTML='<span class="spinner"></span>';
-  btn.disabled=true;
-
-  const email=document.getElementById('loginEmail').value.trim();
-  const pass =document.getElementById('loginPassword').value;
-
-  // Si Firebase no está configurado, entrar en modo local
-  if(!fbAvailable){
-    showApp(email);
-    return;
-  }
-
-  try {
-    await fbAuth.signInWithEmailAndPassword(email, pass);
-    // onAuthStateChanged lo maneja
-  } catch(err){
-    const errEl=document.getElementById('loginError');
-    errEl.textContent = err.code==='auth/wrong-password'||err.code==='auth/user-not-found'
-      ? 'Correo o contraseña incorrectos.' : err.message;
-    errEl.classList.remove('hidden');
-  } finally {
-    btn.innerHTML='Ingresar'; btn.disabled=false;
-  }
-}
-
-async function doLogout(){
-  if(fbAvailable) await fbAuth.signOut();
-  if(unsubSchedule){ unsubSchedule(); unsubSchedule=null; }
-  document.getElementById('mainApp').classList.add('hidden');
-  document.getElementById('loginScreen').classList.remove('hidden');
-}
-
-if(fbAvailable){
-  fbAuth.onAuthStateChanged(user=>{
-    if(user){
-      showApp(user.email);
-      startFirestoreSync();
-    }
-  });
-}
-
-function showApp(email){
-  document.getElementById('loginScreen').classList.add('hidden');
-  document.getElementById('mainApp').classList.remove('hidden');
-  document.getElementById('userDisplay').textContent=email||'Daniel Marrero';
-  state.currentUser = email;
-  if(!fbAvailable){
-    loadLocalState();
-    renderAll();
-  }
-}
-
-// ═══ FIRESTORE SYNC ═══
-function startFirestoreSync(){
-  if(!db) return;
-  setSyncStatus('Conectando…','amber');
-  unsubSchedule = db.collection('schedule').onSnapshot(snap=>{
-    snap.docChanges().forEach(change=>{
-      if(change.type==='removed'){
-        delete state.appointments[change.doc.id];
-      } else {
-        if(!state.writing){
-          state.appointments[change.doc.id] = normalizeDay(change.doc.data());
-        }
-      }
-    });
-    setSyncStatus('Sincronizado','green');
-    if(!state.writing) renderAll();
-  }, err=>{
-    console.error('Firestore error:',err);
-    setSyncStatus('Error de conexión','red');
-  });
-
-  // Migrate from localStorage if Firestore is empty
-  migrateFromLocalStorage();
-}
-
-async function migrateFromLocalStorage(){
-  if(!db) return;
-  try {
-    const meta = await db.collection('_meta').doc('migration').get();
-    if(meta.exists) return;
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return;
-    const parsed = JSON.parse(raw);
-    if(!parsed||!parsed.appointments||!Object.keys(parsed.appointments).length) return;
-    const batch=db.batch();
-    Object.entries(parsed.appointments).forEach(([dateKey,dayData])=>{
-      const ref=db.collection('schedule').doc(dateKey);
-      const normalized={};
-      Object.entries(dayData).forEach(([h,v])=>{ normalized[String(h)]=v; });
-      batch.set(ref,normalized,{merge:true});
-    });
-    batch.set(db.collection('_meta').doc('migration'),{done:true,at:firebase.firestore.FieldValue.serverTimestamp()});
-    await batch.commit();
-    console.log('Datos migrados de localStorage a Firestore.');
-  } catch(e){ console.warn('Migración fallida:',e); }
-}
-
-function normalizeDay(data){
-  const r={};
-  Object.entries(data||{}).forEach(function(entry){ const n=parseInt(entry[0]); r[isNaN(n)?entry[0]:n]=entry[1]; });
-  return r;
-}
-
-function setSyncStatus(txt, color){
-  const el=document.getElementById('syncStatus');
-  if(!el) return;
-  const clsMap={green:'bg-green-50 border-green-200 text-green-800',amber:'bg-amber-50 border-amber-200 text-amber-800',red:'bg-red-50 border-red-200 text-red-800'};
-  el.className='text-xs border rounded-xl px-3 py-1.5 font-semibold '+(clsMap[color]||clsMap.green);
-  const dot=color==='green'?'●':color==='amber'?'◌':'✕';
-  el.textContent=dot+' '+txt;
-}
-
-// ═══ PERSISTENCE ═══
+// ════ PERSISTENCE ════
 let saveTimers={};
 function scheduleWrite(dateKey){
   clearTimeout(saveTimers[dateKey]);
-  saveTimers[dateKey]=setTimeout(()=>{ persistDay(dateKey); },900);
+  saveTimers[dateKey]=setTimeout(()=>{ persistDay(dateKey); }, 800);
 }
-
 async function persistDay(dateKey){
   const dayData=state.appointments[dateKey]||{};
   if(db){
-    const doc={};
-    Object.entries(dayData).forEach(([h,v])=>{ doc[String(h)]=v; });
-    await db.collection('schedule').doc(dateKey).set(doc).catch(e=>console.warn('Write error:',e));
+    const doc={}; Object.entries(dayData).forEach(([h,v])=>{ doc[String(h)]=v; });
+    await db.collection('schedule').doc(dateKey).set(doc).catch(e=>console.warn(e));
   }
-  saveLocalState();
+  try{ localStorage.setItem(STORAGE_KEY,JSON.stringify({appointments:state.appointments})); }catch(e){}
+}
+function loadLocal(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY); if(!raw) return;
+    const p=JSON.parse(raw); if(p&&p.appointments) state.appointments=p.appointments;
+  }catch(e){}
+}
+function normalizeDay(data){
+  const r={};
+  Object.entries(data||{}).forEach(function(e){ const n=parseInt(e[0]); r[isNaN(n)?e[0]:n]=e[1]; });
+  return r;
 }
 
-function saveLocalState(){
-  try { localStorage.setItem(STORAGE_KEY,JSON.stringify({appointments:state.appointments,selectedDateKey:state.selectedDateKey,currentDate:state.currentDate.toISOString()})); } catch(e){}
+// ════ SYNC ════
+function startSync(){
+  if(!db) return;
+  setSyncColor('amber');
+  unsubSchedule=db.collection('schedule').onSnapshot(snap=>{
+    if(!state.writing){
+      snap.forEach(doc=>{ state.appointments[doc.id]=normalizeDay(doc.data()); });
+    }
+    setSyncColor('green');
+    renderCalendar();
+  }, ()=>setSyncColor('red'));
+  migrateLocal();
+}
+async function migrateLocal(){
+  if(!db) return;
+  try{
+    const meta=await db.collection('_meta').doc('migration').get();
+    if(meta.exists) return;
+    const raw=localStorage.getItem(STORAGE_KEY); if(!raw) return;
+    const p=JSON.parse(raw); if(!p||!p.appointments||!Object.keys(p.appointments).length) return;
+    const batch=db.batch();
+    Object.entries(p.appointments).forEach(([dk,day])=>{
+      const doc={}; Object.entries(day).forEach(([h,v])=>{ doc[String(h)]=v; });
+      batch.set(db.collection('schedule').doc(dk),doc,{merge:true});
+    });
+    batch.set(db.collection('_meta').doc('migration'),{done:true});
+    await batch.commit();
+  }catch(e){ console.warn('Migración:',e); }
+}
+function setSyncColor(c){
+  const dot=document.getElementById('syncDot');
+  if(!dot) return;
+  dot.style.background=c==='green'?'#4ade80':c==='amber'?'#fbbf24':'#f87171';
 }
 
-function loadLocalState(){
-  try {
-    const raw=localStorage.getItem(STORAGE_KEY);
-    if(!raw) return;
-    const p=JSON.parse(raw);
-    if(p.appointments) state.appointments=p.appointments;
-  } catch(e){}
-}
-
-// ═══ DATA HELPERS ═══
-function getDayData(dateKey){
-  if(!state.appointments[dateKey]) state.appointments[dateKey]={};
-  return state.appointments[dateKey];
-}
-function getDayStats(dateKey){
-  const day=state.appointments[dateKey]||{};
-  let count=0,gross=0,daniel=0,clinic=0,doctor=0;
-  HOURS.forEach(h=>{
-    const s=day[h]||{}; const amt=Number(s.amount)||0;
-    if(!(s.patient||'').trim()&&!(s.attentionType||'').trim()&&!amt) return;
-    count++; gross+=amt;
-    const sp=splitAmount(amt,s.origin);
-    daniel+=sp.daniel; clinic+=sp.clinic; doctor+=sp.doctor;
-  });
-  return {count,gross,daniel,clinic,doctor};
+// ════ DATA HELPERS ════
+function getDayData(dk){ if(!state.appointments[dk]) state.appointments[dk]={}; return state.appointments[dk]; }
+function getDayStats(dk){
+  const day=state.appointments[dk]||{}; let c=0,g=0,dan=0,cl=0,ab=0;
+  HOURS.forEach(h=>{ const s=day[h]||{},a=Number(s.amount)||0; if(!(s.patient||'').trim()&&!a) return; c++;g+=a; const sp=splitAmount(a,s.origin); dan+=sp.daniel;cl+=sp.clinic;ab+=sp.doctor; });
+  return {count:c,gross:g,daniel:dan,clinic:cl,doctor:ab};
 }
 function getAllStats(){
   const t={count:0,gross:0,daniel:0,clinic:0,doctor:0};
-  Object.keys(state.appointments).forEach(k=>{
-    const s=getDayStats(k); t.count+=s.count; t.gross+=s.gross;
-    t.daniel+=s.daniel; t.clinic+=s.clinic; t.doctor+=s.doctor;
-  });
+  Object.keys(state.appointments).forEach(k=>{ const s=getDayStats(k); t.count+=s.count;t.gross+=s.gross;t.daniel+=s.daniel;t.clinic+=s.clinic;t.doctor+=s.doctor; });
   return t;
 }
-function getOccupiedHours(dateKey){
-  const d=state.appointments[dateKey]||{};
-  return HOURS.filter(h=>d[h]&&(d[h].patient||'').trim());
-}
-function clearSlot(dateKey,hour){
-  getDayData(dateKey)[hour]={patient:'',attentionType:'',amount:'',origin:'propio',status:'pending'};
+
+// ════ KNOWN PATIENTS (autocomplete engine) ════
+function getKnownPatients(){
+  const map=new Map();
+  // Sort dates desc to get most recent first
+  const sortedDates=Object.keys(state.appointments).sort().reverse();
+  sortedDates.forEach(dk=>{
+    const day=state.appointments[dk]||{};
+    HOURS.forEach(h=>{
+      const s=day[h]||{}; const name=(s.patient||'').trim(); if(!name) return;
+      const key=name.toLowerCase();
+      if(!map.has(key)) map.set(key,{name,lastSlot:{...s,dateKey:dk},count:0});
+      map.get(key).count++;
+    });
+  });
+  return Array.from(map.values()).sort((a,b)=>b.count-a.count);
 }
 
-// ═══ RENDER: MONTH ═══
-function renderMonth(){
-  const year=state.currentDate.getFullYear(), month=state.currentDate.getMonth();
-  document.getElementById('monthLabel').textContent=new Date(year,month,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'});
-  const grid=document.getElementById('monthGrid'); grid.innerHTML='';
-  const todayKey=toDateKey(today);
-  const firstDay=(new Date(year,month,1).getDay()+6)%7;
-  const days=new Date(year,month+1,0).getDate();
-  for(let i=0;i<firstDay;i++) grid.appendChild(document.createElement('div'));
-  for(let d=1;d<=days;d++){
-    const date=new Date(year,month,d), dateKey=toDateKey(date), stats=getDayStats(dateKey);
-    const isToday=dateKey===todayKey, isSel=dateKey===state.selectedDateKey;
-    const cell=document.createElement('button');
-    cell.className=`day-cell text-left border rounded-xl p-2 text-xs ${isSel?'selected':isToday?'today-mark':'border-slate-200 bg-white'}`;
-    cell.innerHTML=`<div class="font-bold ${isToday?'text-amber-700':'text-slate-800'}">${d}</div>${stats.count?`<div class="text-slate-500">${stats.count} pac.</div><div class="text-sky-700 font-semibold">${money(stats.gross)}</div>`:''}`;
-    cell.onclick=()=>{ state.selectedDateKey=dateKey; renderAll(); saveLocalState(); };
-    grid.appendChild(cell);
-  }
-}
-
-// ═══ RENDER: WEEKLY GRID (horas hacia abajo) ═══
-function renderWeeklyGrid(){
-  const selDate=parseDateKey(state.selectedDateKey);
-  const monday=getWeekStart(selDate);
+// ════ CALENDAR RENDER ════
+function renderCalendar(){
+  const days=[]; const ws=new Date(state.weekStart);
+  for(let i=0;i<7;i++){ const d=new Date(ws); d.setDate(ws.getDate()+i); days.push(d); }
   const todayKey=toDateKey(today);
 
-  const days=[];
-  for(let i=0;i<7;i++){
-    const d=new Date(monday); d.setDate(monday.getDate()+i); days.push(d);
-  }
+  // Toolbar date label
+  document.getElementById('dateLabel').textContent=
+    `${days[0].toLocaleDateString('es-ES',{day:'2-digit',month:'short'})} — ${days[6].toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'})}`;
 
-  document.getElementById('weeklyLabel').textContent=
-    `${days[0].toLocaleDateString('es-ES')} — ${days[6].toLocaleDateString('es-ES')}`;
-
-  let html='<table class="wg-table"><thead><tr><th class="wg-hour" style="position:sticky;top:0;left:0;z-index:4;background:#f1f5f9"></th>';
+  let html='<table class="cal-table"><thead><tr><th class="time-th"></th>';
   days.forEach(d=>{
-    const dk=toDateKey(d), isToday=dk===todayKey, isSel=dk===state.selectedDateKey;
-    const wday=d.toLocaleDateString('es-ES',{weekday:'short'}).toUpperCase().replace('.','');
-    const occ=getOccupiedHours(dk).length;
-    html+=`<th class="${isToday?'wg-today-hd':''}${isSel?' wg-sel-hd':''}" onclick="selectDay('${dk}')" style="cursor:pointer">
-      <div class="font-bold text-slate-700">${wday} ${d.getDate()}</div>
-      <div class="text-[10px] text-slate-400">${occ? occ+' pac.':'libre'}</div>
+    const dk=toDateKey(d), isToday=dk===todayKey, isSel=dk===state.selectedDate;
+    const stats=getDayStats(dk);
+    html+=`<th class="${isToday?'today-col':''} ${isSel?'sel-col':''}" style="cursor:pointer" onclick="selectDate('${dk}')">
+      <div style="font-weight:800;font-size:13px">${d.toLocaleDateString('es-ES',{weekday:'short'}).replace('.','').toUpperCase()} ${d.getDate()}</div>
+      <div style="font-size:10px;opacity:.7">${stats.count?stats.count+' pac.':'libre'}</div>
     </th>`;
   });
   html+='</tr></thead><tbody>';
 
   HOURS.forEach(h=>{
-    html+=`<tr><td class="wg-hour">${pad(h)}:00</td>`;
+    html+=`<tr><td class="time-cell">${pad(h)}:00</td>`;
     days.forEach(d=>{
-      const dk=toDateKey(d);
-      const slot=(state.appointments[dk]||{})[h]||{};
-      const pat=(slot.patient||'').trim();
-      const st=slot.status||'pending';
+      const dk=toDateKey(d), slot=(state.appointments[dk]||{})[h]||{};
+      const pat=(slot.patient||'').trim(), st=slot.status||'pending';
       if(pat){
-        const stCls=(STATUS_CFG[st]||STATUS_CFG.pending).cls;
-        html+=`<td class="wg-cell"><div class="wg-pat ${stCls}" onclick="openPatientFromSlot('${dk}',${h})" title="${escH(pat)} — ${(STATUS_CFG[st]||STATUS_CFG.pending).label}">${escH(pat)}</div></td>`;
+        html+=`<td class="slot-td"><div class="slot-appt s-${st}" onclick="openApptModal('${dk}',${h})">
+          <div class="slot-name">${escH(pat)}</div>
+          <div class="slot-type">${escH(slot.attentionType||'')}</div>
+        </div></td>`;
       } else {
-        html+=`<td class="wg-cell"><div class="wg-empty" onclick="selectDay('${dk}')" title="Ir al ${d.toLocaleDateString('es-ES')}">+</div></td>`;
+        html+=`<td class="slot-td"><div class="slot-empty" onclick="openApptModal('${dk}',${h})">+</div></td>`;
       }
     });
     html+='</tr>';
   });
   html+='</tbody></table>';
-  document.getElementById('weeklyGrid').innerHTML=html;
+  document.getElementById('calInner').innerHTML=html;
 }
 
-function selectDay(dateKey){
-  state.selectedDateKey=dateKey;
-  state.currentDate=new Date(parseDateKey(dateKey).getFullYear(),parseDateKey(dateKey).getMonth(),1);
-  renderAll();
-  saveLocalState();
-  document.querySelector('section:has(#scheduleBody)')?.scrollIntoView({behavior:'smooth',block:'start'});
-}
+function prevWeek(){ state.weekStart.setDate(state.weekStart.getDate()-7); renderCalendar(); }
+function nextWeek(){ state.weekStart.setDate(state.weekStart.getDate()+7); renderCalendar(); }
+function goToday(){ state.weekStart=getWeekStart(today); state.selectedDate=toDateKey(today); renderCalendar(); }
+function selectDate(dk){ state.selectedDate=dk; state.weekStart=getWeekStart(parseDateKey(dk)); renderCalendar(); }
 
-// ═══ RENDER: ANNUAL ═══
-function renderAnnual(){
-  const year=state.currentDate.getFullYear();
-  document.getElementById('yearLabel').textContent='Año '+year;
-  const grid=document.getElementById('annualGrid'); grid.innerHTML='';
-  for(let m=0;m<12;m++){
-    const days=new Date(year,m+1,0).getDate();
-    let gross=0,count=0;
-    for(let d=1;d<=days;d++){
-      const s=getDayStats(toDateKey(new Date(year,m,d)));
-      gross+=s.gross; count+=s.count;
-    }
-    const card=document.createElement('button');
-    card.className='bg-slate-50 border border-slate-200 rounded-xl p-3 text-left hover:border-sky-300 hover:bg-sky-50 transition-colors';
-    card.innerHTML=`<div class="font-bold text-slate-700 capitalize text-sm">${new Date(year,m,1).toLocaleDateString('es-ES',{month:'long'})}</div><div class="text-xs text-slate-500 mt-1">${count} atención(es)</div><div class="text-sm text-sky-700 font-bold">${money(gross)}</div>`;
-    card.onclick=()=>{ state.currentDate=new Date(year,m,1); renderAll(); saveLocalState(); };
-    grid.appendChild(card);
-  }
-}
+// ════ APPOINTMENT MODAL ════
+let apptContext = null; // {dateKey, hour}
+let apptStatus  = 'pending';
+let acIndex     = -1;
+let acResults   = [];
 
-// ═══ RENDER: SCHEDULE (daily table) ═══
-function renderSchedule(){
-  const selDate=parseDateKey(state.selectedDateKey);
-  document.getElementById('selectedDayLabel').textContent=selDate.toLocaleDateString('es-ES',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  const dayData=getDayData(state.selectedDateKey);
-  const tbody=document.getElementById('scheduleBody'); tbody.innerHTML='';
-
-  HOURS.forEach(h=>{
-    const slot=dayData[h]||{patient:'',attentionType:'',amount:'',origin:'propio',status:'pending'};
-    const amt=Number(slot.amount)||0, split=splitAmount(amt,slot.origin), rule=ORIGINS[slot.origin]||ORIGINS.propio;
-    const st=slot.status||'pending';
-    const isOcc=(slot.patient||'').trim().length>0;
-    const hasPaid=amt>0;
-    const rowCls=st==='confirmed'?'row-confirmed':st==='cancelled'?'row-cancelled':st==='rescheduled'?'row-rescheduled':'';
-
-    const tr=document.createElement('tr');
-    tr.className=`border-b border-slate-100 ${rowCls}${isOcc?' row-occupied':''}`;
-    tr.innerHTML=`
-      <td class="p-2 col-hora font-mono font-bold text-slate-600 text-sm">${pad(h)}:00</td>
-      <td class="p-2 col-pat">
-        <div class="flex gap-1">
-          <input class="slot-input flex-1" data-hour="${h}" data-field="patient" value="${escH(slot.patient||'')}" placeholder="Nombre del paciente">
-          ${isOcc?`<button class="text-xs bg-sky-100 hover:bg-sky-200 text-sky-700 px-2 rounded-lg font-semibold whitespace-nowrap" onclick="openPatientFromSlot('${state.selectedDateKey}',${h})">Ficha</button>`:''}
-        </div>
-      </td>
-      <td class="p-2">
-        <select class="slot-input" data-hour="${h}" data-field="status">
-          ${Object.entries(STATUS_CFG).map(([v,c])=>`<option value="${v}" ${st===v?'selected':''}>${c.label}</option>`).join('')}
-        </select>
-      </td>
-      <td class="p-2">
-        <select class="slot-input" data-action="slot-manage" data-hour="${h}">
-          <option value="">Gestionar...</option>
-          <option value="MODIFICA HORA">MODIFICA HORA</option>
-          <option value="ANULA HORA">ANULA HORA</option>
-        </select>
-      </td>
-      <td class="p-2"><input class="slot-input" data-hour="${h}" data-field="attentionType" value="${escH(slot.attentionType||'')}" placeholder="Tipo de atención"></td>
-      <td class="p-2 ${hasPaid?'col-split':''}">
-        <select class="slot-input" data-hour="${h}" data-field="origin">
-          ${Object.entries(ORIGINS).map(([v,o])=>`<option value="${v}" ${(slot.origin||'propio')===v?'selected':''}>${o.label}</option>`).join('')}
-        </select>
-      </td>
-      <td class="p-2 ${hasPaid?'col-split':''}"><input type="number" min="0" class="slot-input" data-hour="${h}" data-field="amount" value="${slot.amount||''}" placeholder="Monto"></td>
-      <td class="p-2 font-semibold text-emerald-700 ${hasPaid?'col-split':''}" data-split="daniel">${splitCellHtml(split.daniel,rule.daniel)}</td>
-      <td class="p-2 font-semibold text-indigo-700 ${hasPaid?'col-split':''}" data-split="clinic">${splitCellHtml(split.clinic,rule.clinic)}</td>
-      <td class="p-2 font-semibold text-fuchsia-700 ${hasPaid?'col-split':''}" data-split="doctor">${splitCellHtml(split.doctor,rule.doctor)}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  tbody.querySelectorAll('input,select:not([data-action])').forEach(el=>{
-    el.addEventListener('input', handleSlotChange);
-    el.addEventListener('change', handleSlotChange);
-  });
-  tbody.querySelectorAll('[data-action="slot-manage"]').forEach(c=>c.addEventListener('change',handleSlotManage));
-  renderDayTotals();
-}
-
-function handleSlotChange(e){
-  const hour=Number(e.target.dataset.hour), field=e.target.dataset.field;
-  if(!Number.isFinite(hour)||!field) return;
-  state.writing=true;
-  const dayData=getDayData(state.selectedDateKey);
-  if(!dayData[hour]) dayData[hour]={patient:'',attentionType:'',amount:'',origin:'propio',status:'pending'};
-  dayData[hour][field]=e.target.value;
-  updateSlotSplitRow(e.target, dayData[hour]);
-  renderDayTotals();
-  renderMonth();
-  renderWeeklyGrid();
-  renderAllTimeTotals();
-  scheduleWrite(state.selectedDateKey);
-  clearTimeout(handleSlotChange._wt);
-  handleSlotChange._wt=setTimeout(()=>{ state.writing=false; },1200);
-}
-
-function updateSlotSplitRow(inputEl, slot){
-  const row=inputEl.closest('tr'); if(!row) return;
-  const amt=Number(slot.amount)||0, split=splitAmount(amt,slot.origin), rule=ORIGINS[slot.origin]||ORIGINS.propio;
-  const d=row.querySelector('[data-split="daniel"]'), c=row.querySelector('[data-split="clinic"]'), doc=row.querySelector('[data-split="doctor"]');
-  if(d) d.innerHTML=splitCellHtml(split.daniel,rule.daniel);
-  if(c) c.innerHTML=splitCellHtml(split.clinic,rule.clinic);
-  if(doc) doc.innerHTML=splitCellHtml(split.doctor,rule.doctor);
-  // Update row class
-  const st=slot.status||'pending', isOcc=(slot.patient||'').trim().length>0, hasPaid=amt>0;
-  row.className=`border-b border-slate-100 ${st==='confirmed'?'row-confirmed':st==='cancelled'?'row-cancelled':st==='rescheduled'?'row-rescheduled':''}${isOcc?' row-occupied':''}`;
-  row.querySelectorAll('td.col-split,td[data-split]').forEach(td=>td.classList.toggle('col-split',hasPaid));
-}
-
-function handleSlotManage(e){
-  const el=e.target, hour=Number(el.dataset.hour);
-  if(!Number.isFinite(hour)) return;
-  const slot=(getDayData(state.selectedDateKey)[hour])||{};
-  const patient=(slot.patient||'').trim();
-  if(!patient){ alert('No hay paciente en este bloque.'); el.value=''; return; }
-  const cmd=(el.value||'').trim().toUpperCase();
-  if(!cmd) return;
-  if(cmd==='ANULA HORA'){
-    if(!confirm(`¿Anular hora de ${patient} a las ${pad(hour)}:00?`)){ el.value=''; return; }
-    clearSlot(state.selectedDateKey,hour);
-    scheduleWrite(state.selectedDateKey);
-    renderAll(); el.value=''; return;
-  }
-  if(cmd==='MODIFICA HORA'){
-    openMoveModal({sourceDateKey:state.selectedDateKey,sourceHour:hour,slot:{...slot}});
-  }
-  el.value='';
-}
-
-function renderDayTotals(){
-  const s=getDayStats(state.selectedDateKey);
-  document.getElementById('dayGross').textContent=money(s.gross);
-  document.getElementById('dayDaniel').textContent=money(s.daniel);
-  document.getElementById('dayClinic').textContent=money(s.clinic);
-  document.getElementById('dayDoctors').textContent=money(s.doctor);
-}
-function renderAllTimeTotals(){
-  const s=getAllStats();
-  document.getElementById('allCount').textContent=s.count;
-  document.getElementById('allGross').textContent=money(s.gross);
-  document.getElementById('allDaniel').textContent=money(s.daniel);
-  document.getElementById('allClinic').textContent=money(s.clinic);
-  document.getElementById('allDoctors').textContent=money(s.doctor);
-}
-
-// ═══ PATIENT PROFILE MODAL ═══
-function openPatientFromSlot(dateKey,hour){
+function openApptModal(dateKey, hour){
+  apptContext={dateKey,hour};
   const slot=(state.appointments[dateKey]||{})[hour]||{};
-  const name=(slot.patient||'').trim();
-  if(!name) return;
-  openPatientModal(name);
+  const d=parseDateKey(dateKey), isNew=!(slot.patient||'').trim();
+
+  document.getElementById('apptModalTitle').textContent=
+    (isNew?'Nueva cita':'Editar cita')+' — '+d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})+' '+pad(hour)+':00';
+
+  document.getElementById('apptPatient').value=slot.patient||'';
+  document.getElementById('apptType').value=slot.attentionType||'';
+  document.getElementById('apptOrigin').value=slot.origin||'propio';
+  document.getElementById('apptAmount').value=slot.amount||'';
+  document.getElementById('apptNotes').value=slot.notes||'';
+  document.getElementById('acDrop').classList.add('hidden');
+  document.getElementById('apptDelBtn').classList.toggle('hidden',isNew);
+
+  selectStatus(slot.status||'pending');
+  updateSplitPreview();
+  document.getElementById('apptModal').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('apptPatient').focus(),80);
 }
 
-function openPatientModal(name){
-  document.getElementById('patientModalName').textContent=name;
-  // Gather all visits for this patient
+function closeApptModal(){
+  document.getElementById('apptModal').classList.add('hidden');
+  document.getElementById('acDrop').classList.add('hidden');
+  apptContext=null;
+}
+
+function selectStatus(st){
+  apptStatus=st;
+  document.querySelectorAll('.st-pill').forEach(p=>{
+    const s=p.dataset.st;
+    p.className='st-pill'+(s===st?' '+(STATUS_CFG[st]?.pill||''):'');
+  });
+}
+
+function updateSplitPreview(){
+  const amt=Number(document.getElementById('apptAmount').value)||0;
+  const origin=document.getElementById('apptOrigin').value;
+  const prev=document.getElementById('splitPreview');
+  if(!amt){ prev.classList.add('hidden'); return; }
+  prev.classList.remove('hidden');
+  const sp=splitAmount(amt,origin);
+  document.getElementById('spDaniel').textContent=money(sp.daniel);
+  document.getElementById('spClinic').textContent=money(sp.clinic);
+  document.getElementById('spAbba').textContent=money(sp.doctor);
+}
+
+function saveAppt(){
+  if(!apptContext) return;
+  const {dateKey,hour}=apptContext;
+  const slot={
+    patient:       document.getElementById('apptPatient').value.trim(),
+    attentionType: document.getElementById('apptType').value.trim(),
+    origin:        document.getElementById('apptOrigin').value,
+    amount:        Number(document.getElementById('apptAmount').value)||'',
+    status:        apptStatus,
+    notes:         document.getElementById('apptNotes').value.trim()
+  };
+  getDayData(dateKey)[hour]=slot;
+  state.writing=true;
+  scheduleWrite(dateKey);
+  setTimeout(()=>{ state.writing=false; },1200);
+  renderCalendar();
+  closeApptModal();
+  if(currentView==='pacientes') renderPacientes();
+}
+
+function deleteAppt(){
+  if(!apptContext) return;
+  const {dateKey,hour}=apptContext;
+  if(!confirm('¿Eliminar esta cita?')) return;
+  getDayData(dateKey)[hour]={patient:'',attentionType:'',amount:'',origin:'propio',status:'pending',notes:''};
+  scheduleWrite(dateKey);
+  renderCalendar();
+  closeApptModal();
+}
+
+// ════ PATIENT AUTOCOMPLETE ════
+function onPatientInput(){
+  const q=document.getElementById('apptPatient').value.trim();
+  if(q.length<2){ document.getElementById('acDrop').classList.add('hidden'); return; }
+  const results=getKnownPatients().filter(p=>p.name.toLowerCase().includes(q.toLowerCase())).slice(0,8);
+  acResults=results; acIndex=-1;
+  const drop=document.getElementById('acDrop');
+  if(!results.length){
+    drop.innerHTML=`<div class="ac-item"><span class="ac-new">➕ Agregar "${escH(q)}" como nuevo paciente</span></div>`;
+    drop.firstChild.onclick=()=>{ document.getElementById('apptPatient').value=q; drop.classList.add('hidden'); };
+  } else {
+    drop.innerHTML=results.map((p,i)=>{
+      const lastDate=parseDateKey(p.lastSlot.dateKey).toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'});
+      return `<div class="ac-item" data-idx="${i}">
+        <div class="ac-name">${escH(p.name)}</div>
+        <div class="ac-meta">Última visita: ${lastDate} · ${escH(p.lastSlot.attentionType||'—')} · ${money(Number(p.lastSlot.amount)||0)} · ${p.count} cita(s)</div>
+      </div>`;
+    }).join('')+`<div class="ac-item" style="border-top:1px solid #e2e8f0"><span class="ac-new">➕ Nuevo paciente: "${escH(q)}"</span></div>`;
+    drop.querySelectorAll('.ac-item[data-idx]').forEach(el=>{
+      el.onclick=()=>{ selectPatient(results[parseInt(el.dataset.idx)]); };
+    });
+    drop.lastChild.onclick=()=>{ document.getElementById('apptPatient').value=q; drop.classList.add('hidden'); };
+  }
+  drop.classList.remove('hidden');
+}
+
+function onPatientKeydown(e){
+  const drop=document.getElementById('acDrop');
+  if(drop.classList.contains('hidden')) return;
+  const items=[...drop.querySelectorAll('.ac-item')];
+  if(e.key==='ArrowDown'){ e.preventDefault(); acIndex=Math.min(acIndex+1,items.length-1); items.forEach((el,i)=>el.classList.toggle('ac-active',i===acIndex)); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); acIndex=Math.max(acIndex-1,0); items.forEach((el,i)=>el.classList.toggle('ac-active',i===acIndex)); }
+  else if(e.key==='Enter' && acIndex>=0 && acResults[acIndex]){ e.preventDefault(); selectPatient(acResults[acIndex]); }
+  else if(e.key==='Escape'){ drop.classList.add('hidden'); }
+}
+
+function selectPatient(p){
+  document.getElementById('apptPatient').value=p.name;
+  document.getElementById('apptType').value=p.lastSlot.attentionType||'';
+  document.getElementById('apptOrigin').value=p.lastSlot.origin||'propio';
+  document.getElementById('apptAmount').value=p.lastSlot.amount||'';
+  document.getElementById('acDrop').classList.add('hidden');
+  updateSplitPreview();
+  document.getElementById('apptType').focus();
+}
+
+// Close dropdown clicking outside
+document.addEventListener('click',e=>{ if(!e.target.closest('#apptPatient')&&!e.target.closest('#acDrop')) document.getElementById('acDrop').classList.add('hidden'); });
+
+// ════ PATIENT PROFILE MODAL ════
+function openPatModal(name){
+  document.getElementById('patModalName').textContent=name;
   const visits=[];
   Object.entries(state.appointments).forEach(([dk,day])=>{
-    HOURS.forEach(h=>{
-      const s=day[h]||{};
-      if((s.patient||'').trim().toLowerCase()===name.toLowerCase()){
-        visits.push({dateKey:dk,hour:h,...s});
-      }
-    });
+    HOURS.forEach(h=>{ const s=day[h]||{}; if((s.patient||'').trim().toLowerCase()===name.toLowerCase()) visits.push({dateKey:dk,hour:h,...s}); });
   });
   visits.sort((a,b)=>b.dateKey.localeCompare(a.dateKey));
-
-  let totalPaid=0; visits.forEach(v=>{ totalPaid+=Number(v.amount)||0; });
-
-  const content=document.getElementById('patientModalContent');
+  let total=0; visits.forEach(v=>{ total+=Number(v.amount)||0; });
+  const content=document.getElementById('patModalContent');
   content.innerHTML=`
-    <div class="grid grid-cols-2 gap-3 text-sm">
-      <div class="bg-sky-50 rounded-lg p-3"><span class="text-slate-500">Total atenciones:</span> <strong>${visits.length}</strong></div>
-      <div class="bg-sky-50 rounded-lg p-3"><span class="text-slate-500">Total pagado:</span> <strong class="text-sky-700">${money(totalPaid)}</strong></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+      <div class="stat-card"><div class="stat-lbl">Total citas</div><div class="stat-val">${visits.length}</div></div>
+      <div class="stat-card"><div class="stat-lbl">Total pagado</div><div class="stat-val" style="font-size:18px">${money(total)}</div></div>
     </div>
-    <div>
-      <h4 class="font-bold text-slate-700 mb-2 text-sm">Historial de visitas</h4>
-      ${visits.length===0?'<p class="text-slate-400 text-sm">Sin atenciones registradas.</p>':
-        visits.map(v=>{
-          const date=parseDateKey(v.dateKey).toLocaleDateString('es-ES',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
-          const st=v.status||'pending', stLabel=(STATUS_CFG[st]||STATUS_CFG.pending).label;
-          const stCls=(STATUS_CFG[st]||STATUS_CFG.pending).cls;
-          return `<div class="visit-row ${stCls} text-sm">
-            <div class="flex justify-between items-start">
-              <div>
-                <strong>${date}</strong> — ${pad(v.hour)}:00
-                <span class="ml-2 text-xs">${stLabel}</span>
-              </div>
-              <strong class="text-sky-700">${money(Number(v.amount)||0)}</strong>
+    <h4 style="font-weight:700;color:#1e3a8a;margin-bottom:8px;font-size:13px;">HISTORIAL DE CITAS</h4>
+    ${visits.length===0?'<p style="color:#94a3b8;font-size:13px">Sin citas registradas.</p>':
+      visits.map(v=>{
+        const d=parseDateKey(v.dateKey).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+        const st=v.status||'pending', sc={pending:'#3b82f6',confirmed:'#16a34a',cancelled:'#dc2626',rescheduled:'#ea580c'}[st]||'#3b82f6';
+        return `<div style="border-left:3px solid ${sc};padding:8px 12px;border-radius:0 7px 7px 0;background:#f8fafc;margin-bottom:6px;">
+          <div style="display:flex;justify-content:space-between;align-items:start;">
+            <div>
+              <strong style="font-size:13px">${d}</strong> · ${pad(v.hour)}:00
+              <span style="margin-left:8px;font-size:11px;color:${sc}">${STATUS_CFG[st]?.label||''}</span>
             </div>
-            ${v.attentionType?`<div class="text-slate-600 text-xs mt-0.5">${escH(v.attentionType)}</div>`:''}
-          </div>`;
-        }).join('')
-      }
+            <strong style="color:#1d4ed8">${money(Number(v.amount)||0)}</strong>
+          </div>
+          ${v.attentionType?`<div style="font-size:12px;color:#64748b;margin-top:3px">${escH(v.attentionType)}</div>`:''}
+          ${v.notes?`<div style="font-size:11px;color:#94a3b8;margin-top:2px;font-style:italic">${escH(v.notes)}</div>`:''}
+          <button onclick="openApptModal('${v.dateKey}',${v.hour})" style="margin-top:5px;font-size:11px;color:#1d4ed8;background:none;border:none;cursor:pointer;text-decoration:underline;">Editar cita</button>
+        </div>`;
+      }).join('')
+    }
+    <div style="margin-top:12px;font-size:11px;color:#94a3b8;background:#f8fafc;border-radius:8px;padding:10px;">
+      💡 <em>Próximamente:</em> datos de contacto, fotos del tratamiento, boletas y confirmación automática por WhatsApp.
+    </div>`;
+  document.getElementById('patModal').classList.remove('hidden');
+}
+function closePatModal(){ document.getElementById('patModal').classList.add('hidden'); }
+document.getElementById('patModal').addEventListener('click',e=>{ if(e.target.id==='patModal') closePatModal(); });
+document.getElementById('apptModal').addEventListener('click',e=>{ if(e.target.id==='apptModal') closeApptModal(); });
+
+// ════ PATIENTS VIEW ════
+function renderPacientes(){
+  const q=(document.getElementById('patSearch')?.value||'').toLowerCase().trim();
+  const patients=getKnownPatients().filter(p=>!q||p.name.toLowerCase().includes(q));
+  const list=document.getElementById('patList'); if(!list) return;
+  if(!patients.length){ list.innerHTML='<div style="color:#94a3b8;font-size:13px;grid-column:span 2">No se encontraron pacientes.</div>'; return; }
+  list.innerHTML=patients.map(p=>{
+    const lastD=parseDateKey(p.lastSlot.dateKey).toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'});
+    const tot=getKnownPatients().find(x=>x.name===p.name)||p;
+    return `<div class="pat-card" onclick="openPatModal('${escH(p.name)}')">
+      <div style="display:flex;justify-content:space-between;align-items:start;">
+        <div>
+          <div style="font-weight:700;font-size:14px;color:#0f172a">${escH(p.name)}</div>
+          <div style="font-size:12px;color:#64748b;margin-top:2px">Última visita: ${lastD}</div>
+          <div style="font-size:12px;color:#64748b">${escH(p.lastSlot.attentionType||'—')}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-weight:800;font-size:16px;color:#1d4ed8">${p.count}</div>
+          <div style="font-size:10px;color:#64748b">cita(s)</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ════ FINANCES VIEW ════
+function renderFinanzas(){
+  const fin=document.getElementById('finContent'); if(!fin) return;
+  const all=getAllStats();
+  const monthStats={};
+  Object.keys(state.appointments).forEach(dk=>{
+    const [y,m]=dk.split('-'); const key=`${y}-${m}`;
+    if(!monthStats[key]) monthStats[key]={gross:0,count:0,daniel:0};
+    const s=getDayStats(dk); monthStats[key].gross+=s.gross; monthStats[key].count+=s.count; monthStats[key].daniel+=s.daniel;
+  });
+  const months=Object.keys(monthStats).sort().reverse().slice(0,12);
+  fin.innerHTML=`
+    <h2 style="font-size:18px;font-weight:800;color:#1e3a8a;margin-bottom:16px">Finanzas</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px;">
+      <div class="stat-card"><div class="stat-lbl">Atenciones totales</div><div class="stat-val">${all.count}</div></div>
+      <div class="stat-card"><div class="stat-lbl">Total facturado</div><div class="stat-val" style="font-size:20px">${money(all.gross)}</div></div>
+      <div class="stat-card"><div class="stat-lbl">Daniel Marrero</div><div class="stat-val" style="font-size:20px;color:#1d4ed8">${money(all.daniel)}</div></div>
+      <div class="stat-card"><div class="stat-lbl">Clínica MES</div><div class="stat-val" style="font-size:20px;color:#7c3aed">${money(all.clinic)}</div></div>
+      <div class="stat-card"><div class="stat-lbl">Clínica ABBA</div><div class="stat-val" style="font-size:20px;color:#be185d">${money(all.doctor)}</div></div>
     </div>
-    <div class="text-xs text-slate-400 bg-slate-50 rounded-lg p-3">
-      💡 Próximamente: ficha completa con datos de contacto, fotos, boletas y seguimiento personalizado.
-    </div>
-  `;
-  document.getElementById('patientModal').classList.remove('hidden');
-}
-function closePatientModal(){ document.getElementById('patientModal').classList.add('hidden'); }
-document.getElementById('patientModal').addEventListener('click',e=>{ if(e.target.id==='patientModal') closePatientModal(); });
-
-// ═══ MOVE MODAL ═══
-function openMoveModal(context){
-  state.moveContext=context;
-  state.movePickerDate=parseDateKey(context.sourceDateKey);
-  state.moveTargetDateKey=context.sourceDateKey;
-  const sd=parseDateKey(context.sourceDateKey);
-  document.getElementById('moveSourceInfo').textContent=`Paciente: ${context.slot.patient} | Hora: ${pad(context.sourceHour)}:00 | ${sd.toLocaleDateString('es-ES')}`;
-  renderMoveMonth(); renderMoveWeek();
-  document.getElementById('moveModal').classList.remove('hidden');
-}
-function closeMoveModal(){ state.moveContext=null; document.getElementById('moveModal').classList.add('hidden'); }
-
-function renderMoveMonth(){
-  const year=state.movePickerDate.getFullYear(), month=state.movePickerDate.getMonth();
-  document.getElementById('moveMonthLabel').textContent=new Date(year,month,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'});
-  const grid=document.getElementById('moveMonthGrid'); grid.innerHTML='';
-  const firstDay=(new Date(year,month,1).getDay()+6)%7;
-  const days=new Date(year,month+1,0).getDate();
-  for(let i=0;i<firstDay;i++) grid.appendChild(document.createElement('div'));
-  for(let d=1;d<=days;d++){
-    const date=new Date(year,month,d), dk=toDateKey(date), occ=getOccupiedHours(dk).length;
-    const sel=dk===state.moveTargetDateKey;
-    const btn=document.createElement('button');
-    btn.className=`move-day-cell ${sel?'selected':''}`;
-    btn.innerHTML=`<div class="font-bold">${d}</div><div class="text-[11px] text-slate-500">${occ} ocup.</div>`;
-    btn.onclick=()=>{ state.moveTargetDateKey=dk; renderMoveMonth(); renderMoveWeek(); };
-    grid.appendChild(btn);
-  }
+    <h3 style="font-size:14px;font-weight:700;color:#374151;margin-bottom:10px">Por mes</h3>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      ${months.map(k=>{
+        const [y,m]=k.split('-'); const label=new Date(+y,+m-1,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'});
+        const s=monthStats[k];
+        return `<div class="stat-card" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;">
+          <div>
+            <div style="font-weight:700;font-size:13px;color:#0f172a;text-transform:capitalize">${label}</div>
+            <div style="font-size:12px;color:#64748b">${s.count} atenciones</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-weight:800;font-size:15px;color:#1d4ed8">${money(s.gross)}</div>
+            <div style="font-size:11px;color:#64748b">Daniel: ${money(s.daniel)}</div>
+          </div>
+        </div>`;
+      }).join('')||'<div style="color:#94a3b8;font-size:13px">Sin datos.</div>'}
+    </div>`;
 }
 
-function renderMoveWeek(){
-  if(!state.moveTargetDateKey) return;
-  const date=parseDateKey(state.moveTargetDateKey), monday=getWeekStart(date);
-  const sun=new Date(monday); sun.setDate(monday.getDate()+6);
-  document.getElementById('moveWeekLabel').textContent=`${monday.toLocaleDateString('es-ES')} — ${sun.toLocaleDateString('es-ES')}`;
-  const wrap=document.getElementById('moveWeekDays'); wrap.innerHTML='';
-  for(let i=0;i<7;i++){
-    const day=new Date(monday); day.setDate(monday.getDate()+i);
-    const dk=toDateKey(day), dayData=state.appointments[dk]||{};
-    const card=document.createElement('div');
-    card.className=`week-day-card ${dk===state.moveTargetDateKey?'selected':''}`;
-    let hoursHtml='';
-    HOURS.forEach(h=>{
-      const row=dayData[h], occ=row&&(row.patient||'').trim().length>0;
-      const srcSame=state.moveContext&&state.moveContext.sourceDateKey===dk&&state.moveContext.sourceHour===h;
-      hoursHtml+=`<button class="move-hour-btn ${occ&&!srcSame?'occupied':'free'}" data-move-date="${dk}" data-move-hour="${h}">${pad(h)}:00</button>`;
-    });
-    card.innerHTML=`<div class="font-bold text-sm">${day.toLocaleDateString('es-ES',{weekday:'long'})}</div><div class="text-xs text-slate-500 mb-1">${day.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit'})}</div><div class="grid grid-cols-2 gap-1">${hoursHtml}</div>`;
-    wrap.appendChild(card);
-  }
-  wrap.querySelectorAll('[data-move-date]').forEach(btn=>btn.addEventListener('click',handleMoveHourSelection));
+// ════ NAVIGATION ════
+let currentView='agenda';
+function showView(v){
+  currentView=v;
+  ['agenda','pacientes','finanzas'].forEach(name=>{
+    document.getElementById('view'+name.charAt(0).toUpperCase()+name.slice(1)).classList.toggle('hidden',name!==v);
+    document.getElementById('tab'+name.charAt(0).toUpperCase()+name.slice(1)).classList.toggle('active',name===v);
+  });
+  document.getElementById('toolbar').classList.toggle('hidden',v!=='agenda');
+  if(v==='pacientes') renderPacientes();
+  if(v==='finanzas') renderFinanzas();
 }
 
-function handleMoveHourSelection(e){
-  if(!state.moveContext) return;
-  const targetDk=e.target.dataset.moveDate, targetH=Number(e.target.dataset.moveHour);
-  if(!targetDk||!HOURS.includes(targetH)) return;
-  const targetDay=getDayData(targetDk), existing=targetDay[targetH]||{};
-  const srcSame=state.moveContext.sourceDateKey===targetDk&&state.moveContext.sourceHour===targetH;
-  if((existing.patient||'').trim()&&!srcSame){
-    if(!confirm(`${pad(targetH)}:00 ya está ocupada por ${existing.patient}. ¿Reemplazar?`)) return;
-  }
-  targetDay[targetH]={...state.moveContext.slot};
-  if(!srcSame) clearSlot(state.moveContext.sourceDateKey, state.moveContext.sourceHour);
-  scheduleWrite(targetDk);
-  if(!srcSame) scheduleWrite(state.moveContext.sourceDateKey);
-  const tp=parseDateKey(targetDk);
-  state.selectedDateKey=targetDk;
-  state.currentDate=new Date(tp.getFullYear(),tp.getMonth(),1);
-  closeMoveModal();
-  renderAll();
-  saveLocalState();
-}
-
-// ═══ NAVIGATION ═══
-function bindNav(){
-  document.getElementById('prevMonthBtn').onclick=()=>{ state.currentDate.setMonth(state.currentDate.getMonth()-1); renderAll(); saveLocalState(); };
-  document.getElementById('nextMonthBtn').onclick=()=>{ state.currentDate.setMonth(state.currentDate.getMonth()+1); renderAll(); saveLocalState(); };
-  document.getElementById('todayBtn').onclick=()=>{ const n=new Date(); state.currentDate=new Date(n.getFullYear(),n.getMonth(),1); state.selectedDateKey=toDateKey(n); renderAll(); saveLocalState(); };
-  document.getElementById('closeMoveModalBtn').onclick=closeMoveModal;
-  document.getElementById('movePrevMonthBtn').onclick=()=>{ state.movePickerDate.setMonth(state.movePickerDate.getMonth()-1); renderMoveMonth(); };
-  document.getElementById('moveNextMonthBtn').onclick=()=>{ state.movePickerDate.setMonth(state.movePickerDate.getMonth()+1); renderMoveMonth(); };
-  document.getElementById('moveModal').addEventListener('click',e=>{ if(e.target.id==='moveModal') closeMoveModal(); });
-}
-
-// ═══ MAIN RENDER ═══
-function renderAll(){
-  renderMonth();
-  renderWeeklyGrid();
-  renderAnnual();
-  renderSchedule();
-  renderAllTimeTotals();
-}
-
-// ═══ BOOT ═══
-bindNav();
-
-// Sin Firebase: entrar directo, sin pantalla de login
-if(!fbAvailable){
-  showApp('Daniel Marrero');
-}
+// ════ BOOT ════
+loadLocal();
+if(fbOK) startSync();
+renderCalendar();
 </script>
 </body>
 </html>
