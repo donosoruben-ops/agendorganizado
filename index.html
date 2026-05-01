@@ -504,6 +504,10 @@ function saveAuth(){
     localStorage.setItem(AUTH_CFG_KEY, JSON.stringify(authCfg));
     localStorage.setItem(USERS_CFG_KEY, JSON.stringify(usersList));
   }catch(e){}
+  if(fbOK){
+    saveConfigDoc('auth',{adminUser:authCfg.adminUser, adminPass:authCfg.adminPass});
+    saveConfigDoc('users',{list:usersList});
+  }
 }
 function getSession(){
   try{
@@ -714,6 +718,13 @@ function loadClinicConfig(){
 
 function saveClinicConfig(){
   try{ localStorage.setItem(CLINIC_CFG_KEY, JSON.stringify(clinicConfig)); }catch(e){}
+  if(fbOK){
+    const toStore={name:clinicConfig.name||''};
+    // Only sync logo if it's under 800KB (Firestore doc limit is 1MB)
+    if(clinicConfig.logo && clinicConfig.logo.length < 800000) toStore.logo=clinicConfig.logo;
+    else if(!clinicConfig.logo) toStore.logo='';
+    saveConfigDoc('clinic', toStore);
+  }
 }
 
 function updateNavBrand(){
@@ -767,13 +778,22 @@ function handleLogoUpload(e){
   const file = e.target.files[0]; if(!file) return;
   const reader = new FileReader();
   reader.onload = function(ev){
-    const data = ev.target.result;
-    document.getElementById('logoPreview').src = data;
-    document.getElementById('logoPreview').style.display = 'block';
-    document.getElementById('logoPlaceholder').style.display = 'none';
-    document.getElementById('logoRemoveBtn').classList.remove('hidden');
-    clinicConfig.logo = data;
-    updateCfgPreview();
+    const img = new Image();
+    img.onload = function(){
+      const MAX=600, canvas=document.createElement('canvas');
+      let w=img.width, h=img.height;
+      if(w>MAX||h>MAX){ if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;} }
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      const data=canvas.toDataURL('image/jpeg',0.78);
+      document.getElementById('logoPreview').src = data;
+      document.getElementById('logoPreview').style.display = 'block';
+      document.getElementById('logoPlaceholder').style.display = 'none';
+      document.getElementById('logoRemoveBtn').classList.remove('hidden');
+      clinicConfig.logo = data;
+      updateCfgPreview();
+    };
+    img.src=ev.target.result;
   };
   reader.readAsDataURL(file);
 }
@@ -820,6 +840,7 @@ function scheduleWrite(dateKey){
 async function persistDay(dateKey){
   const dayData=state.appointments[dateKey]||{};
   if(db){
+    await ensureAuth();
     const doc={}; Object.entries(dayData).forEach(([h,v])=>{ doc[String(h)]=v; });
     await db.collection('schedule').doc(dateKey).set(doc).catch(e=>console.warn(e));
   }
@@ -838,9 +859,10 @@ function normalizeDay(data){
 }
 
 // ════ SYNC ════
-function startSync(){
+async function startSync(){
   if(!db) return;
   setSyncColor('amber');
+  await ensureAuth();
   unsubSchedule=db.collection('schedule').onSnapshot(snap=>{
     if(!state.writing){
       snap.forEach(doc=>{ state.appointments[doc.id]=normalizeDay(doc.data()); });
@@ -870,6 +892,50 @@ function setSyncColor(c){
   const dot=document.getElementById('syncDot');
   if(!dot) return;
   dot.style.background=c==='green'?'#4ade80':c==='amber'?'#fbbf24':'#f87171';
+}
+
+// ════ CONFIG SYNC ════
+async function ensureAuth(){
+  if(!fbAuth) return;
+  if(fbAuth.currentUser) return;
+  await fbAuth.signInAnonymously().catch(e=>console.warn('Auth anon:',e));
+}
+
+async function saveConfigDoc(docId, data){
+  if(!db) return;
+  await ensureAuth();
+  await db.collection('_config').doc(docId).set(data).catch(e=>console.warn('Config save:',e));
+}
+
+function listenConfig(){
+  if(!db) return;
+  db.collection('_config').onSnapshot(snap=>{
+    snap.forEach(doc=>{
+      const d=doc.data();
+      if(doc.id==='auth' && d){
+        if(d.adminUser) authCfg.adminUser=d.adminUser;
+        if(d.adminPass) authCfg.adminPass=d.adminPass;
+        try{ localStorage.setItem(AUTH_CFG_KEY,JSON.stringify(authCfg)); }catch(e){}
+      }
+      if(doc.id==='users' && d && Array.isArray(d.list)){
+        usersList=d.list;
+        try{ localStorage.setItem(USERS_CFG_KEY,JSON.stringify(usersList)); }catch(e){}
+        populateUserDropdown();
+      }
+      if(doc.id==='clinic' && d){
+        if(d.name!==undefined) clinicConfig.name=d.name;
+        if(d.logo!==undefined) clinicConfig.logo=d.logo;
+        try{ localStorage.setItem(CLINIC_CFG_KEY,JSON.stringify(clinicConfig)); }catch(e){}
+        updateNavBrand();
+        updateLoginBrand();
+      }
+    });
+  },e=>console.warn('Config listener:',e));
+}
+
+function bootSync(){
+  if(!db) return;
+  ensureAuth().then(()=>listenConfig()).catch(e=>console.warn('Boot sync:',e));
 }
 
 // ════ DATA HELPERS ════
@@ -1205,6 +1271,7 @@ function showView(v){
 loadLocal();
 loadClinicConfig();
 loadAuth();
+bootSync(); // carga usuarios/config desde Firestore antes del login
 checkSession(); // shows login screen or app based on sessionStorage
 </script>
 </body>
