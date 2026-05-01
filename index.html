@@ -174,6 +174,29 @@
     .pat-card-new{background:#fff;border:2px dashed #cbd5e1;border-radius:10px;padding:14px;cursor:pointer;transition:all .12s;display:flex;align-items:center;justify-content:center;gap:8px;color:#64748b;font-size:13px;font-weight:700;}
     .pat-card-new:hover{border-color:var(--blue);color:var(--blue);background:#f0f7ff;}
     .pat-badge{display:inline-block;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700;}
+
+    /* ── SESSION TRACKER ── */
+    .ses-box{border-radius:9px;padding:8px 12px;display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+    .ses-done{background:#fee2e2;border:2px solid #dc2626;}
+    .ses-pending{background:#dcfce7;border:2px solid #16a34a;}
+    .ses-done-label{font-size:11px;font-weight:700;color:#7f1d1d;}
+    .ses-pending-label{font-size:11px;font-weight:700;color:#14532d;}
+    .ses-date-input{font-size:11px;border:1px solid #16a34a;border-radius:5px;padding:2px 6px;color:#14532d;background:#f0fdf4;margin-top:3px;width:100%;}
+    .ses-btn{background:#16a34a;color:#fff;border:none;border-radius:7px;padding:6px 11px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+    .ses-btn:hover{background:#15803d;}
+
+    /* ── AI / VOICE ── */
+    #aiChatModal .modal-box{max-width:480px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;}
+    .ai-bubble{border-radius:12px;padding:9px 13px;font-size:13px;line-height:1.5;max-width:85%;}
+    .ai-bubble-user{background:#dbeafe;color:#1e3a8a;align-self:flex-end;margin-left:auto;}
+    .ai-bubble-bot{background:#f1f5f9;color:#0f172a;align-self:flex-start;}
+    .ai-typing{font-size:11px;color:#94a3b8;font-style:italic;}
+
+    /* ── RESPONSIVE 2-COL APPT ── */
+    @media (max-width:500px){
+      .appt-2col{grid-template-columns:1fr !important;}
+      .ses-box{flex-wrap:wrap;}
+    }
   </style>
 </head>
 <body>
@@ -319,12 +342,12 @@
           <span id="apptBoxLabel" style="font-size:12px;color:#64748b;white-space:nowrap;"></span>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="appt-2col" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="field-group">
           <label>Tipo de atención</label>
           <div style="display:flex;gap:6px;">
-            <input id="apptType" class="fi" type="text" placeholder="Facial, masaje..." style="flex:1;">
-            <button type="button" onclick="openSvcPicker()" style="background:var(--blue);color:#fff;border:none;border-radius:8px;padding:0 10px;cursor:pointer;font-size:14px;flex-shrink:0;" title="Seleccionar servicio">🔍</button>
+            <input id="apptType" class="fi" type="text" placeholder="Facial, masaje..." style="flex:1;min-width:0;">
+            <button type="button" onclick="openSvcPicker()" style="background:var(--blue);color:#fff;border:none;border-radius:8px;padding:0 12px;cursor:pointer;font-size:16px;flex-shrink:0;min-width:44px;display:flex;align-items:center;justify-content:center;" title="Seleccionar servicio">🔍</button>
           </div>
         </div>
         <div class="field-group">
@@ -340,6 +363,8 @@
         <label>Monto ($)</label>
         <input id="apptAmount" class="fi" type="number" min="0" placeholder="0" oninput="updateSplitPreview()">
       </div>
+      <!-- Session tracker (depilación / facial) -->
+      <div id="sessionTracker" class="hidden"></div>
       <div id="splitPreview" class="hidden" style="background:#f8fafc;border-radius:8px;padding:10px;font-size:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;">
         <div><div style="color:#64748b">Daniel</div><strong id="spDaniel" style="color:#1d4ed8">$0</strong></div>
         <div><div style="color:#64748b">Clínica MES</div><strong id="spClinic" style="color:#7c3aed">$0</strong></div>
@@ -350,8 +375,11 @@
         <textarea id="apptNotes" class="fi" rows="2" placeholder="Observaciones..." style="resize:vertical"></textarea>
       </div>
     </div>
-    <div class="modal-ft">
+    <div class="modal-ft" style="flex-wrap:wrap;gap:6px;">
       <button type="button" class="btn-del hidden" id="apptDelBtn" onclick="deleteAppt()">🗑 Eliminar</button>
+      <button type="button" id="voiceBtn" onclick="startVoiceSchedule()" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-weight:700;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px;" title="Agendar por voz">🎤 Voz</button>
+      <button type="button" onclick="openAiChat()" style="background:#0ea5e9;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-weight:700;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px;" title="Asistente IA">🤖 IA</button>
+      <div style="flex:1;min-width:8px;"></div>
       <button type="button" class="btn-cancel" onclick="closeApptModal()">Cancelar</button>
       <button type="button" class="btn-save" onclick="saveAppt()">Guardar cita</button>
     </div>
@@ -588,6 +616,46 @@
   </div>
 </div>
 
+<!-- ══ AI CHAT MODAL ══ -->
+<div id="aiChatModal" class="modal-bg hidden">
+  <div class="modal-box" style="max-width:480px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;">
+    <div class="modal-hd" style="flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:20px;">🤖</span>
+        <div>
+          <h3 style="font-size:15px;">Asistente IA</h3>
+          <div style="font-size:11px;opacity:.7;">Agenda, consultas y respuestas automáticas</div>
+        </div>
+      </div>
+      <button type="button" onclick="closeAiChat()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:16px;">✕</button>
+    </div>
+    <!-- API Key config -->
+    <div id="aiKeyPane" style="padding:12px 14px;background:#fef9c3;border-bottom:1px solid #fbbf24;flex-shrink:0;display:none;">
+      <div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:6px;">⚙️ Configura tu API Key de Claude (Anthropic) para usar la IA:</div>
+      <div style="display:flex;gap:6px;">
+        <input id="aiKeyInput" type="password" class="fi fi-sm" placeholder="sk-ant-..." style="flex:1;">
+        <button type="button" onclick="saveAiKey()" class="btn-save" style="padding:5px 12px;font-size:12px;">Guardar</button>
+      </div>
+      <div style="font-size:10px;color:#92400e;margin-top:4px;">La clave se guarda solo en este dispositivo (localStorage).</div>
+    </div>
+    <!-- Messages -->
+    <div id="aiMessages" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;">
+      <div class="ai-bubble ai-bubble-bot">👋 Hola! Soy tu asistente de agenda. Puedo ayudarte a:<br>• Buscar disponibilidad<br>• Responder consultas de pacientes<br>• Agendar citas rápido<br><br>¿En qué te ayudo?</div>
+    </div>
+    <!-- Voice record indicator -->
+    <div id="aiVoiceIndicator" style="padding:8px 14px;background:#fee2e2;border-top:1px solid #fca5a5;font-size:12px;color:#dc2626;font-weight:700;display:none;align-items:center;gap:8px;">
+      <span style="animation:spin .7s linear infinite;display:inline-block;width:12px;height:12px;border:2px solid #fca5a5;border-top-color:#dc2626;border-radius:50%;"></span>
+      🎤 Escuchando... habla ahora
+    </div>
+    <!-- Input -->
+    <div style="padding:10px 14px;border-top:1px solid #f1f5f9;display:flex;gap:8px;flex-shrink:0;">
+      <input id="aiMsgInput" class="fi" type="text" placeholder="Escribe tu consulta..." style="flex:1;" onkeydown="if(event.key==='Enter') sendAiMsg()">
+      <button type="button" onclick="aiVoiceInput()" id="aiVoiceMsgBtn" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:0 12px;cursor:pointer;font-size:16px;flex-shrink:0;" title="Hablar">🎤</button>
+      <button type="button" onclick="sendAiMsg()" style="background:var(--blue);color:#fff;border:none;border-radius:8px;padding:0 14px;cursor:pointer;font-weight:700;font-size:13px;flex-shrink:0;">Enviar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ════════════════════════════════════════════════════════════
 // FIREBASE CONFIG — reemplaza los valores REEMPLAZAR_...
@@ -661,7 +729,14 @@ const DEFAULT_SERVICIOS = [
     {zona:'Bozo',s1:14400,s3:36000,s6:60000},
     {zona:'Delineado Barba',s1:16800,s3:42000,s6:70000}
   ]},
-  {id:'facial',nombre:'Facial / Cosmetología',tipo:'simple',items:[]},
+  {id:'facial',nombre:'Facial / Cosmetología',tipo:'sesiones',items:[
+    {zona:'Limpieza Facial',s1:25000,s3:60000,s6:0},
+    {zona:'Limpieza Profunda',s1:30000,s3:72000,s6:0},
+    {zona:'Hidratación Profunda',s1:28000,s3:66000,s6:0},
+    {zona:'Anti-Acné',s1:32000,s3:78000,s6:0},
+    {zona:'Rejuvenecimiento Facial',s1:38000,s3:90000,s6:0},
+    {zona:'Peeling Químico',s1:35000,s3:84000,s6:0}
+  ]},
   {id:'masaje',nombre:'Masajes',tipo:'simple',items:[]},
   {id:'otro',nombre:'Otro servicio',tipo:'simple',items:[]}
 ];
@@ -1301,6 +1376,15 @@ function openApptModal(dateKey, hour, box){
   document.getElementById('acDrop').classList.add('hidden');
   document.getElementById('apptDelBtn').classList.toggle('hidden', isNew || !isAdmin());
 
+  // Restore session data
+  currentSessionData = slot.sessions || null;
+  if(!currentSessionData && !isNew){
+    // check if the type label implies sessions
+    const n = parseSessionCount(slot.attentionType||'');
+    if(n > 1) currentSessionData = initSessionData(n, null, dateKey);
+  }
+  renderSessionTracker();
+
   selectStatus(slot.status||'pending');
   updateSplitPreview();
   document.getElementById('apptModal').classList.remove('hidden');
@@ -1311,6 +1395,7 @@ function closeApptModal(){
   document.getElementById('apptModal').classList.add('hidden');
   document.getElementById('acDrop').classList.add('hidden');
   apptContext=null;
+  currentSessionData=null;
 }
 
 function selectStatus(st){
@@ -1345,7 +1430,8 @@ function saveAppt(){
     amount:        Number(document.getElementById('apptAmount').value)||'',
     status:        apptStatus,
     notes:         document.getElementById('apptNotes').value.trim(),
-    box:           newBox
+    box:           newBox,
+    sessions:      currentSessionData || undefined
   };
   // If box changed, remove old key
   if(newKey!==key) delete getDayData(dateKey)[key];
@@ -1905,25 +1991,27 @@ function renderSvcAdmin(){
   pane.innerHTML=cats.map((cat,ci)=>`
     <div style="margin-bottom:18px;">
       <div style="font-size:13px;font-weight:800;color:#1a56b0;margin-bottom:8px;">💈 ${escH(cat.nombre)}</div>
-      ${cat.tipo==='sesiones'&&cat.items.length?`
-        <div style="overflow-x:auto;">
+      ${cat.tipo==='sesiones'&&cat.items.length?(()=>{
+        const has6=cat.items.some(it=>it.s6>0);
+        return `<div style="overflow-x:auto;">
           <table style="width:100%;border-collapse:collapse;font-size:11px;">
             <thead><tr style="background:#f8fafc;">
               <th style="text-align:left;padding:5px 8px;border:1px solid #e2e8f0;font-weight:700;color:#475569;">Zona</th>
               <th style="padding:5px 8px;border:1px solid #e2e8f0;color:#475569;text-align:center;">1 Sesión</th>
               <th style="padding:5px 8px;border:1px solid #e2e8f0;color:#475569;text-align:center;">3 Sesiones</th>
-              <th style="padding:5px 8px;border:1px solid #e2e8f0;color:#475569;text-align:center;">6 Sesiones</th>
+              ${has6?'<th style="padding:5px 8px;border:1px solid #e2e8f0;color:#475569;text-align:center;">6 Sesiones</th>':''}
             </tr></thead>
             <tbody>${cat.items.map((item,ii)=>`
               <tr>
                 <td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;">${escH(item.zona)}</td>
                 <td style="border:1px solid #e2e8f0;padding:2px 4px;"><input id="svc_${ci}_${ii}_s1" type="number" value="${item.s1||0}" style="width:80px;border:none;text-align:right;font-size:11px;background:transparent;"></td>
                 <td style="border:1px solid #e2e8f0;padding:2px 4px;"><input id="svc_${ci}_${ii}_s3" type="number" value="${item.s3||0}" style="width:80px;border:none;text-align:right;font-size:11px;background:transparent;"></td>
-                <td style="border:1px solid #e2e8f0;padding:2px 4px;"><input id="svc_${ci}_${ii}_s6" type="number" value="${item.s6||0}" style="width:80px;border:none;text-align:right;font-size:11px;background:transparent;"></td>
+                ${has6?`<td style="border:1px solid #e2e8f0;padding:2px 4px;"><input id="svc_${ci}_${ii}_s6" type="number" value="${item.s6||0}" style="width:80px;border:none;text-align:right;font-size:11px;background:transparent;"></td>`:''}
               </tr>`).join('')}
             </tbody>
           </table>
-        </div>` : `<div style="font-size:11px;color:#94a3b8;font-style:italic;">Sin precios definidos aún.</div>`}
+        </div>`;
+      })() : `<div style="font-size:11px;color:#94a3b8;font-style:italic;">Sin precios definidos aún.</div>`}
     </div>`).join('');
 }
 
@@ -1964,9 +2052,9 @@ function renderSvcItems(ci){
         <tbody>${cat.items.map(item=>`
           <tr>
             <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:600;">${escH(item.zona)}</td>
-            ${[{n:1,v:item.s1},{n:3,v:item.s3},{n:6,v:item.s6}].map(({n,v})=>`
+            ${[{n:1,v:item.s1},{n:3,v:item.s3},{n:6,v:item.s6}].filter(x=>x.v).map(({n,v})=>`
               <td style="border:1px solid #e2e8f0;text-align:center;padding:4px;">
-                <button type="button" onclick="selectSvcItem('${escH(cat.nombre)} - ${escH(item.zona)} (${n} ses.)',${v})"
+                <button type="button" onclick="selectSvcItem('${escH(cat.nombre)} - ${escH(item.zona)} (${n} ses.)',${v},${n})"
                   style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;font-weight:700;transition:all .1s;"
                   onmouseover="this.style.background='var(--blue)';this.style.color='#fff';"
                   onmouseout="this.style.background='#eff6ff';this.style.color='#1d4ed8';">
@@ -1980,15 +2068,286 @@ function renderSvcItems(ci){
     pane.innerHTML=`<div style="color:#94a3b8;font-size:13px;text-align:center;padding:24px;">Sin ítems definidos para esta categoría.<br><span style="font-size:11px;">Ve a Configuración → Servicios para agregar precios.</span></div>`;
   }
 }
-function selectSvcItem(label, amount){
+function selectSvcItem(label, amount, sesCount){
   document.getElementById('apptType').value=label;
   document.getElementById('apptAmount').value=amount;
+  const n = sesCount || parseSessionCount(label);
+  if(n > 1){
+    const todayKey = apptContext?.dateKey || toDateKey(today);
+    const existing = apptContext ? (state.appointments[apptContext.dateKey]?.[apptContext.key]?.sessions) : null;
+    currentSessionData = initSessionData(n, existing, todayKey);
+  } else {
+    currentSessionData = null;
+  }
+  renderSessionTracker();
   updateSplitPreview();
   closeSvcPicker();
 }
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('svcModal')?.addEventListener('click',e=>{ if(e.target.id==='svcModal') closeSvcPicker(); });
+  document.getElementById('aiChatModal')?.addEventListener('click',e=>{ if(e.target.id==='aiChatModal') closeAiChat(); });
 });
+
+// ════ SESSION TRACKER ════
+let currentSessionData = null;
+
+function parseSessionCount(label){
+  const m=(label||'').match(/\((\d+)\s*ses/i);
+  return m?parseInt(m[1]):0;
+}
+
+function addDaysToKey(dateKey, days){
+  const d=parseDateKey(dateKey);
+  d.setDate(d.getDate()+days);
+  return toDateKey(d);
+}
+
+function initSessionData(total, existing, baseDateKey){
+  if(existing && existing.total===total) return JSON.parse(JSON.stringify(existing));
+  const items=[];
+  for(let i=0;i<total;i++){
+    if(i===0){
+      items.push({index:i, date:baseDateKey, status:'done'});
+    } else {
+      items.push({index:i, date:addDaysToKey(baseDateKey, 30*i), status:'pending'});
+    }
+  }
+  return {total, items};
+}
+
+function renderSessionTracker(){
+  const tracker=document.getElementById('sessionTracker');
+  if(!tracker) return;
+  if(!currentSessionData||currentSessionData.total<=1){
+    tracker.innerHTML='';
+    tracker.classList.add('hidden');
+    return;
+  }
+  tracker.classList.remove('hidden');
+  const {total,items}=currentSessionData;
+  let html=`<div style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">Plan de sesiones (${total} total)</div>`;
+  items.forEach((item,i)=>{
+    const isDone=item.status==='done';
+    if(isDone){
+      const dateStr=item.date?parseDateKey(item.date).toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short',year:'numeric'}):'—';
+      html+=`<div class="ses-box ses-done">
+        <span style="font-size:20px;">🔴</span>
+        <div style="flex:1;">
+          <div class="ses-done-label">Sesión ${i+1} de ${total} — Realizada</div>
+          <div style="font-size:11px;color:#991b1b;">${dateStr}</div>
+        </div>
+      </div>`;
+    } else {
+      html+=`<div class="ses-box ses-pending" style="flex-wrap:wrap;">
+        <span style="font-size:20px;flex-shrink:0;">🟢</span>
+        <div style="flex:1;min-width:130px;">
+          <div class="ses-pending-label">Sesión ${i+1} de ${total} — Pendiente</div>
+          <input type="date" value="${item.date||''}" onchange="updateSessionDate(${i},this.value)"
+            class="ses-date-input" style="margin-top:4px;">
+        </div>
+        <button type="button" class="ses-btn" onclick="scheduleSession(${i})">📅 Agendar</button>
+      </div>`;
+    }
+  });
+  tracker.innerHTML=html;
+}
+
+function updateSessionDate(index, dateStr){
+  if(!currentSessionData) return;
+  currentSessionData.items[index].date=dateStr;
+}
+
+function scheduleSession(index){
+  if(!currentSessionData||!apptContext) return;
+  const session=currentSessionData.items[index];
+  const patient=document.getElementById('apptPatient').value.trim();
+  const type=document.getElementById('apptType').value.trim();
+  // Save current appointment with sessions before navigating
+  saveAppt();
+  const targetDate=session.date||toDateKey(today);
+  const d=parseDateKey(targetDate);
+  state.weekStart=getWeekStart(d);
+  state.selectedDate=targetDate;
+  showView('agenda');
+  renderCalendar();
+  setTimeout(()=>{
+    // Find first available slot
+    let targetHour=null, targetBox=1;
+    for(const h of HOURS){
+      for(let b=1;b<=NUM_BOXES;b++){
+        const k=slotKey(h,b);
+        if(!(state.appointments[targetDate]&&state.appointments[targetDate][k]&&(state.appointments[targetDate][k].patient||'').trim())){
+          targetHour=h; targetBox=b; break;
+        }
+      }
+      if(targetHour!==null) break;
+    }
+    if(targetHour===null){ targetHour=HOURS[2]; targetBox=1; }
+    openApptModal(targetDate,targetHour,targetBox);
+    setTimeout(()=>{
+      document.getElementById('apptPatient').value=patient;
+      const baseType=type.replace(/\s*\(\d+\s*ses\.\)/i,'').trim();
+      document.getElementById('apptType').value=`${baseType} (Ses. ${index+1}/${currentSessionData.total})`;
+      updateSplitPreview();
+    },100);
+  },250);
+}
+
+// ════ VOICE SCHEDULING ════
+function startVoiceSchedule(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ alert('Tu navegador no soporta reconocimiento de voz.\nUsa Chrome en Android o escritorio.'); return; }
+  const btn=document.getElementById('voiceBtn');
+  const recog=new SR();
+  recog.lang='es-ES'; recog.interimResults=false; recog.maxAlternatives=1;
+  btn.textContent='🔴 Escuchando...';
+  btn.style.background='#dc2626';
+  recog.start();
+  recog.onresult=(e)=>{
+    btn.textContent='🎤 Voz'; btn.style.background='';
+    const text=e.results[0][0].transcript;
+    processVoiceAppt(text);
+  };
+  recog.onerror=()=>{ btn.textContent='🎤 Voz'; btn.style.background=''; alert('Error de micrófono. Intenta de nuevo.'); };
+  recog.onend=()=>{ btn.textContent='🎤 Voz'; btn.style.background=''; };
+}
+
+function processVoiceAppt(text){
+  // Basic extraction heuristics (Spanish)
+  const lc=text.toLowerCase();
+  // Try to find patient name: "para (nombre)" or "paciente (nombre)"
+  let name='';
+  const mName=text.match(/(?:para|paciente|es)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*)/);
+  if(mName) name=mName[1];
+  if(name) { document.getElementById('apptPatient').value=name; }
+  // Try to extract amount
+  const mAmt=text.match(/(\d[\d.]*)\s*(?:mil|k|peso|pesos)?/i);
+  if(mAmt){ const n=parseInt(mAmt[1].replace(/\./g,'')); if(n>0&&n<10000) document.getElementById('apptAmount').value=n*1000; else if(n>=1000) document.getElementById('apptAmount').value=n; }
+  // Put transcription in notes
+  document.getElementById('apptNotes').value=(document.getElementById('apptNotes').value?document.getElementById('apptNotes').value+'\n':'')+'🎤 '+text;
+  // Try Claude AI for better parsing
+  const apiKey=localStorage.getItem('claudeApiKey');
+  if(apiKey) parseVoiceWithClaude(text, apiKey);
+}
+
+async function parseVoiceWithClaude(text, apiKey){
+  const apptDate=apptContext?apptContext.dateKey:toDateKey(today);
+  const prompt=`Analiza este dictado de agenda médica y extrae la información. Responde SOLO en JSON válido.
+Dictado: "${text}"
+Fecha de la cita: ${apptDate}
+JSON de respuesta: {"patient":"nombre completo","attentionType":"tipo de atención","amount":0,"notes":"notas adicionales"}
+Si no encuentras algún campo, usa "" para strings y 0 para amount.`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'x-api-key':apiKey,'anthropic-version':'2023-06-01','content-type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:256,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await res.json();
+    const content=data.content?.[0]?.text||'';
+    const jsonMatch=content.match(/\{[\s\S]*\}/);
+    if(!jsonMatch) return;
+    const parsed=JSON.parse(jsonMatch[0]);
+    if(parsed.patient) document.getElementById('apptPatient').value=parsed.patient;
+    if(parsed.attentionType) document.getElementById('apptType').value=parsed.attentionType;
+    if(parsed.amount&&parsed.amount>0) document.getElementById('apptAmount').value=parsed.amount;
+    if(parsed.notes) document.getElementById('apptNotes').value=parsed.notes;
+    updateSplitPreview();
+  }catch(e){ console.warn('Voice Claude parse:', e); }
+}
+
+// ════ AI CHAT ASSISTANT ════
+let aiMessages=[];
+
+function openAiChat(){
+  const apiKey=localStorage.getItem('claudeApiKey');
+  const keyPane=document.getElementById('aiKeyPane');
+  keyPane.style.display=apiKey?'none':'block';
+  if(apiKey){ document.getElementById('aiKeyInput').value=apiKey; }
+  document.getElementById('aiChatModal').classList.remove('hidden');
+  document.getElementById('aiMsgInput').focus();
+}
+
+function closeAiChat(){
+  document.getElementById('aiChatModal').classList.add('hidden');
+}
+
+function saveAiKey(){
+  const k=document.getElementById('aiKeyInput').value.trim();
+  if(!k){ alert('Ingresa una clave válida.'); return; }
+  localStorage.setItem('claudeApiKey',k);
+  document.getElementById('aiKeyPane').style.display='none';
+  appendAiMsg('bot','✅ API Key guardada. ¡Ahora puedo ayudarte con inteligencia real!');
+}
+
+function appendAiMsg(role, text){
+  const box=document.getElementById('aiMessages');
+  const div=document.createElement('div');
+  div.className='ai-bubble '+(role==='user'?'ai-bubble-user':'ai-bubble-bot');
+  div.innerHTML=escH(text).replace(/\n/g,'<br>');
+  box.appendChild(div);
+  box.scrollTop=box.scrollHeight;
+}
+
+function appendAiTyping(){
+  const box=document.getElementById('aiMessages');
+  const div=document.createElement('div');
+  div.className='ai-bubble ai-bubble-bot ai-typing'; div.id='aiTyping';
+  div.textContent='✍️ Pensando...';
+  box.appendChild(div); box.scrollTop=box.scrollHeight;
+}
+
+function removeAiTyping(){ document.getElementById('aiTyping')?.remove(); }
+
+async function sendAiMsg(){
+  const inp=document.getElementById('aiMsgInput');
+  const text=inp.value.trim(); if(!text) return;
+  inp.value='';
+  appendAiMsg('user',text);
+  aiMessages.push({role:'user',content:text});
+  const apiKey=localStorage.getItem('claudeApiKey');
+  if(!apiKey){
+    appendAiMsg('bot','⚠️ No hay API Key configurada. Presiona ⚙️ para ingresar tu clave de Anthropic.');
+    return;
+  }
+  appendAiTyping();
+  // Build context: today's schedule
+  const todayKey=toDateKey(today);
+  const sched=getDayStats(todayKey);
+  const systemPrompt=`Eres el asistente de agenda de Daniel Marrero Cosmetólogo. Ayudas a agendar citas, responder pacientes y consultar disponibilidad.
+Datos de hoy (${todayKey}): ${sched.count} citas, total $${sched.gross}.
+Responde en español, de forma breve y profesional. Si el usuario pide agendar, indica que abra el calendario o usa el botón de cita.`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'x-api-key':apiKey,'anthropic-version':'2023-06-01','content-type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:512,system:systemPrompt,messages:aiMessages})
+    });
+    const data=await res.json();
+    removeAiTyping();
+    const reply=data.content?.[0]?.text||'(sin respuesta)';
+    aiMessages.push({role:'assistant',content:reply});
+    appendAiMsg('bot',reply);
+  }catch(e){ removeAiTyping(); appendAiMsg('bot','❌ Error al conectar con la IA: '+e.message); }
+}
+
+function aiVoiceInput(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ alert('Tu navegador no soporta voz.'); return; }
+  const ind=document.getElementById('aiVoiceIndicator');
+  const btn=document.getElementById('aiVoiceMsgBtn');
+  const recog=new SR();
+  recog.lang='es-ES'; recog.interimResults=false;
+  ind.style.display='flex'; btn.style.background='#dc2626';
+  recog.start();
+  recog.onresult=(e)=>{
+    ind.style.display='none'; btn.style.background='';
+    document.getElementById('aiMsgInput').value=e.results[0][0].transcript;
+    sendAiMsg();
+  };
+  recog.onerror=()=>{ ind.style.display='none'; btn.style.background=''; };
+  recog.onend=()=>{ ind.style.display='none'; btn.style.background=''; };
+}
 
 // ════ BOOT ════
 loadLocal();
