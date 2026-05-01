@@ -422,7 +422,7 @@ if(fbAvailable){
 function showApp(email){
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('mainApp').classList.remove('hidden');
-  document.getElementById('userDisplay').textContent=email||'usuario';
+  document.getElementById('userDisplay').textContent=email||'Daniel Marrero';
   state.currentUser = email;
   if(!fbAvailable){
     loadLocalState();
@@ -930,17 +930,9 @@ function renderAll(){
 // ═══ BOOT ═══
 bindNav();
 
-// Si Firebase no está configurado, mostrar pantalla de login en modo local
+// Sin Firebase: entrar directo, sin pantalla de login
 if(!fbAvailable){
-  // En modo local, botón "Ingresar" sin contraseña
-  document.getElementById('loginBtn').addEventListener('click', function(e){
-    if(!document.getElementById('loginEmail').value){
-      document.getElementById('loginEmail').focus();
-      return;
-    }
-    e.preventDefault();
-    showApp(document.getElementById('loginEmail').value);
-  });
+  showApp('Daniel Marrero');
 }
 </script>
 </body>
