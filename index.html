@@ -529,6 +529,8 @@ function checkSession(){
   currentSession = getSession();
   if(currentSession){
     showApp();
+    renderCalendar();
+    if(fbOK) startSync();
   } else {
     showLoginScreen();
   }
