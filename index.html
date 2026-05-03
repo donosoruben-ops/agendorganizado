@@ -1041,7 +1041,7 @@ function switchCfgTab(tab){
   });
   if(tab==='usuarios') renderUsersList();
   if(tab==='boxes') renderBoxesCfg();
-  if(tab==='servicios') renderSvcAdmin();
+  if(tab==='servicios'){ initSvcEditBuf(); renderSvcAdmin(); }
 }
 
 function openCfgModal(){
@@ -1966,53 +1966,111 @@ function getServicios(){ return serviciosCfg || DEFAULT_SERVICIOS; }
 function loadServiciosFromConfig(d){
   if(d&&Array.isArray(d.categorias)) serviciosCfg=d.categorias;
 }
-async function saveServiciosCfg(){
-  const cats=getServicios().map((cat,ci)=>{
-    const newItems=cat.items.map((item,ii)=>{
-      const baseId=`svc_${ci}_${ii}`;
+let svcEditBuf = null;
+function initSvcEditBuf(){
+  svcEditBuf = JSON.parse(JSON.stringify(getServicios()));
+}
+function svcFlushInputs(){
+  if(!svcEditBuf) return;
+  svcEditBuf.forEach((cat,ci)=>{
+    cat.items.forEach((item,ii)=>{
+      const base=`svc_${ci}_${ii}`;
       if(cat.tipo==='sesiones'){
-        return {...item,
-          s1:parseInt(document.getElementById(baseId+'_s1')?.value)||item.s1,
-          s3:parseInt(document.getElementById(baseId+'_s3')?.value)||item.s3,
-          s6:parseInt(document.getElementById(baseId+'_s6')?.value)||item.s6
-        };
+        const zEl=document.getElementById(base+'_zona');
+        const s1=document.getElementById(base+'_s1');
+        const s3=document.getElementById(base+'_s3');
+        const s6=document.getElementById(base+'_s6');
+        if(zEl) item.zona=zEl.value.trim()||item.zona;
+        if(s1) item.s1=parseInt(s1.value)||0;
+        if(s3) item.s3=parseInt(s3.value)||0;
+        if(s6) item.s6=parseInt(s6.value)||0;
+      } else {
+        const nEl=document.getElementById(base+'_nombre');
+        const pEl=document.getElementById(base+'_precio');
+        if(nEl) item.nombre=nEl.value.trim()||item.nombre||'';
+        if(pEl) item.precio=parseInt(pEl.value)||0;
       }
-      return item;
     });
-    return {...cat,items:newItems};
   });
+}
+function svcAddItem(ci){
+  svcFlushInputs();
+  const cat=svcEditBuf[ci]; if(!cat) return;
+  if(cat.tipo==='sesiones') cat.items.push({zona:'',s1:0,s3:0,s6:0});
+  else cat.items.push({nombre:'',precio:0});
+  renderSvcAdmin();
+}
+function svcDelItem(ci,ii){
+  svcFlushInputs();
+  const cat=svcEditBuf[ci]; if(!cat) return;
+  if(!confirm('¿Eliminar este ítem?')) return;
+  cat.items.splice(ii,1);
+  renderSvcAdmin();
+}
+async function saveServiciosCfg(){
+  svcFlushInputs();
+  const cats=(svcEditBuf||getServicios()).map(cat=>({
+    ...cat,
+    items: cat.items.filter(it=> cat.tipo==='sesiones' ? (it.zona&&it.zona.trim()) : (it.nombre&&it.nombre.trim()))
+  }));
   serviciosCfg=cats;
   if(fbOK) await saveConfigDoc('servicios',{categorias:cats});
+  svcEditBuf=null;
   closeCfgModal();
 }
 function renderSvcAdmin(){
   const pane=document.getElementById('svcAdminPane'); if(!pane) return;
-  const cats=getServicios();
-  pane.innerHTML=cats.map((cat,ci)=>`
-    <div style="margin-bottom:18px;">
-      <div style="font-size:13px;font-weight:800;color:#1a56b0;margin-bottom:8px;">💈 ${escH(cat.nombre)}</div>
-      ${cat.tipo==='sesiones'&&cat.items.length?(()=>{
-        const has6=cat.items.some(it=>it.s6>0);
-        return `<div style="overflow-x:auto;">
-          <table style="width:100%;border-collapse:collapse;font-size:11px;">
-            <thead><tr style="background:#f8fafc;">
-              <th style="text-align:left;padding:5px 8px;border:1px solid #e2e8f0;font-weight:700;color:#475569;">Zona</th>
-              <th style="padding:5px 8px;border:1px solid #e2e8f0;color:#475569;text-align:center;">1 Sesión</th>
-              <th style="padding:5px 8px;border:1px solid #e2e8f0;color:#475569;text-align:center;">3 Sesiones</th>
-              ${has6?'<th style="padding:5px 8px;border:1px solid #e2e8f0;color:#475569;text-align:center;">6 Sesiones</th>':''}
-            </tr></thead>
-            <tbody>${cat.items.map((item,ii)=>`
-              <tr>
-                <td style="padding:4px 8px;border:1px solid #e2e8f0;font-weight:600;">${escH(item.zona)}</td>
-                <td style="border:1px solid #e2e8f0;padding:2px 4px;"><input id="svc_${ci}_${ii}_s1" type="number" value="${item.s1||0}" style="width:80px;border:none;text-align:right;font-size:11px;background:transparent;"></td>
-                <td style="border:1px solid #e2e8f0;padding:2px 4px;"><input id="svc_${ci}_${ii}_s3" type="number" value="${item.s3||0}" style="width:80px;border:none;text-align:right;font-size:11px;background:transparent;"></td>
-                ${has6?`<td style="border:1px solid #e2e8f0;padding:2px 4px;"><input id="svc_${ci}_${ii}_s6" type="number" value="${item.s6||0}" style="width:80px;border:none;text-align:right;font-size:11px;background:transparent;"></td>`:''}
-              </tr>`).join('')}
-            </tbody>
-          </table>
-        </div>`;
-      })() : `<div style="font-size:11px;color:#94a3b8;font-style:italic;">Sin precios definidos aún.</div>`}
-    </div>`).join('');
+  if(!svcEditBuf) initSvcEditBuf();
+  const cats=svcEditBuf;
+  pane.innerHTML=cats.map((cat,ci)=>{
+    const isSes=cat.tipo==='sesiones';
+    const head=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;">
+        <div style="font-size:13px;font-weight:800;color:#1a56b0;">💈 ${escH(cat.nombre)}</div>
+        <button type="button" onclick="svcAddItem(${ci})" style="background:#dbeafe;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px;font-weight:700;">+ Agregar ${isSes?'zona':'servicio'}</button>
+      </div>`;
+    if(isSes){
+      const has6=cat.items.some(it=>(it.s6|0)>0);
+      const body=cat.items.length?`<div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:11px;">
+          <thead><tr style="background:#f8fafc;">
+            <th style="text-align:left;padding:5px 8px;border:1px solid #e2e8f0;font-weight:700;color:#475569;">Zona</th>
+            <th style="padding:5px 8px;border:1px solid #e2e8f0;color:#475569;text-align:center;">1 Sesión</th>
+            <th style="padding:5px 8px;border:1px solid #e2e8f0;color:#475569;text-align:center;">3 Sesiones</th>
+            ${has6?'<th style="padding:5px 8px;border:1px solid #e2e8f0;color:#475569;text-align:center;">6 Sesiones</th>':''}
+            <th style="padding:5px;border:1px solid #e2e8f0;width:32px;"></th>
+          </tr></thead>
+          <tbody>${cat.items.map((item,ii)=>`
+            <tr>
+              <td style="border:1px solid #e2e8f0;padding:2px 4px;"><input id="svc_${ci}_${ii}_zona" type="text" value="${escH(item.zona||'')}" placeholder="Nombre de la zona" style="width:100%;min-width:160px;border:none;font-size:11px;font-weight:600;background:transparent;padding:3px 4px;"></td>
+              <td style="border:1px solid #e2e8f0;padding:2px 4px;"><input id="svc_${ci}_${ii}_s1" type="number" value="${item.s1||0}" style="width:80px;border:none;text-align:right;font-size:11px;background:transparent;"></td>
+              <td style="border:1px solid #e2e8f0;padding:2px 4px;"><input id="svc_${ci}_${ii}_s3" type="number" value="${item.s3||0}" style="width:80px;border:none;text-align:right;font-size:11px;background:transparent;"></td>
+              ${has6?`<td style="border:1px solid #e2e8f0;padding:2px 4px;"><input id="svc_${ci}_${ii}_s6" type="number" value="${item.s6||0}" style="width:80px;border:none;text-align:right;font-size:11px;background:transparent;"></td>`:''}
+              <td style="border:1px solid #e2e8f0;padding:2px;text-align:center;"><button type="button" onclick="svcDelItem(${ci},${ii})" title="Eliminar" style="background:#fee2e2;color:#b91c1c;border:none;border-radius:4px;padding:2px 6px;cursor:pointer;font-size:11px;">🗑</button></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`:`<div style="font-size:11px;color:#94a3b8;font-style:italic;">Sin zonas definidas.</div>`;
+      return `<div style="margin-bottom:18px;">${head}${body}</div>`;
+    } else {
+      const body=cat.items.length?`<div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:11px;">
+          <thead><tr style="background:#f8fafc;">
+            <th style="text-align:left;padding:5px 8px;border:1px solid #e2e8f0;font-weight:700;color:#475569;">Servicio</th>
+            <th style="padding:5px 8px;border:1px solid #e2e8f0;color:#475569;text-align:center;">Precio</th>
+            <th style="padding:5px;border:1px solid #e2e8f0;width:32px;"></th>
+          </tr></thead>
+          <tbody>${cat.items.map((item,ii)=>`
+            <tr>
+              <td style="border:1px solid #e2e8f0;padding:2px 4px;"><input id="svc_${ci}_${ii}_nombre" type="text" value="${escH(item.nombre||'')}" placeholder="Nombre del servicio" style="width:100%;min-width:200px;border:none;font-size:11px;font-weight:600;background:transparent;padding:3px 4px;"></td>
+              <td style="border:1px solid #e2e8f0;padding:2px 4px;"><input id="svc_${ci}_${ii}_precio" type="number" value="${item.precio||0}" style="width:100px;border:none;text-align:right;font-size:11px;background:transparent;"></td>
+              <td style="border:1px solid #e2e8f0;padding:2px;text-align:center;"><button type="button" onclick="svcDelItem(${ci},${ii})" title="Eliminar" style="background:#fee2e2;color:#b91c1c;border:none;border-radius:4px;padding:2px 6px;cursor:pointer;font-size:11px;">🗑</button></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`:`<div style="font-size:11px;color:#94a3b8;font-style:italic;">Sin servicios definidos.</div>`;
+      return `<div style="margin-bottom:18px;">${head}${body}</div>`;
+    }
+  }).join('');
 }
 
 // ════ SERVICE PICKER ════
@@ -2061,6 +2119,29 @@ function renderSvcItems(ci){
                   $${(v/1000).toFixed(0)}k
                 </button>`:''}</td>`; }).join('')}
           </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } else if(cat.tipo==='simple' && cat.items.length){
+    pane.innerHTML=`
+      <div style="font-size:11px;color:#64748b;margin-bottom:10px;">Selecciona un servicio:</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead><tr style="background:#f8fafc;position:sticky;top:0;">
+          <th style="text-align:left;padding:7px 10px;border:1px solid #e2e8f0;font-weight:700;">Servicio</th>
+          <th style="padding:7px;border:1px solid #e2e8f0;text-align:center;white-space:nowrap;">Precio</th>
+        </tr></thead>
+        <tbody>${cat.items.map(item=>{
+          const v=item.precio||0;
+          return `<tr>
+            <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:600;">${escH(item.nombre||'')}</td>
+            <td style="border:1px solid #e2e8f0;text-align:center;padding:4px;">${v?`
+              <button type="button" onclick="selectSvcItem('${escH(cat.nombre)} - ${escH(item.nombre||'')}',${v},1)"
+                style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px;font-weight:700;"
+                onmouseover="this.style.background='var(--blue)';this.style.color='#fff';"
+                onmouseout="this.style.background='#eff6ff';this.style.color='#1d4ed8';">
+                $${(v/1000).toFixed(0)}k
+              </button>`:'<span style="color:#cbd5e1;">—</span>'}</td>
+          </tr>`;
+        }).join('')}
         </tbody>
       </table>`;
   } else {
