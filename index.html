@@ -2912,10 +2912,23 @@ async function presShare(mode){
   if(!name){ alert('Ingresa el nombre del cliente.'); return; }
   if(!presState.items.length){ alert('Agrega al menos un servicio al presupuesto.'); return; }
 
+  // Validate destination BEFORE async work, then open the window SYNCHRONOUSLY
+  // (browsers block window.open after async/await — popup-blocker preserves user-gesture only on direct click)
+  let popupWin = null;
+  if(mode === 'email'){
+    const emailInput = document.getElementById('presClientEmail').value.trim();
+    if(!emailInput){ alert('El cliente no tiene email registrado.'); return; }
+    popupWin = window.open('about:blank', '_blank');
+  } else if(mode === 'whatsapp'){
+    const phoneInput = document.getElementById('presClientPhone').value.trim();
+    if(!phoneInput){ alert('El cliente no tiene WhatsApp/fono registrado.'); return; }
+    popupWin = window.open('about:blank', '_blank');
+  }
+
   presSetStatus('Generando PDF...', 'info');
   let built;
   try{ built = await presGeneratePDF(); }
-  catch(e){ console.error(e); presSetStatus('Error generando PDF', 'err'); return; }
+  catch(e){ console.error(e); presSetStatus('Error generando PDF', 'err'); if(popupWin) popupWin.close(); return; }
   const { blob, data, pdf, filename } = built;
 
   if(mode === 'print'){
@@ -2944,10 +2957,12 @@ async function presShare(mode){
     if(mode==='email'){
       const to = data.cliEmail;
       const subj = 'Presupuesto N° '+presState.numero;
-      window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subj)}&body=${encodeURIComponent(fallbackText)}`, '_blank');
+      const targetURL = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subj)}&body=${encodeURIComponent(fallbackText)}`;
+      if(popupWin && !popupWin.closed) popupWin.location.href = targetURL; else window.open(targetURL,'_blank');
     } else {
       const phone = (data.cliPhone||'').replace(/\D/g,'');
-      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(fallbackText)}`, '_blank');
+      const targetURL = `https://wa.me/${phone}?text=${encodeURIComponent(fallbackText)}`;
+      if(popupWin && !popupWin.closed) popupWin.location.href = targetURL; else window.open(targetURL,'_blank');
     }
     return;
   }
@@ -2955,15 +2970,14 @@ async function presShare(mode){
   const msg = presBuildMessage(data, url);
   if(mode === 'email'){
     const to = data.cliEmail;
-    if(!to){ alert('El cliente no tiene email registrado.'); presSetStatus('',''); return; }
     const subj = 'Presupuesto N° '+presState.numero+' — Daniel Marrero';
-    // Opens Gmail compose (web or app on mobile)
-    window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subj)}&body=${encodeURIComponent(msg)}`, '_blank');
+    const targetURL = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subj)}&body=${encodeURIComponent(msg)}`;
+    if(popupWin && !popupWin.closed) popupWin.location.href = targetURL; else window.open(targetURL,'_blank');
     presSetStatus('Gmail abierto con el borrador. Revisa y presiona Enviar.', 'ok');
   } else if(mode === 'whatsapp'){
     const phone = (data.cliPhone||'').replace(/\D/g,'');
-    if(!phone){ alert('El cliente no tiene WhatsApp/fono registrado.'); presSetStatus('',''); return; }
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+    const targetURL = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+    if(popupWin && !popupWin.closed) popupWin.location.href = targetURL; else window.open(targetURL,'_blank');
     presSetStatus('WhatsApp abierto. Link al PDF incluido.', 'ok');
   }
 }
