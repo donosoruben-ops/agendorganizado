@@ -2943,7 +2943,8 @@ async function presShare(mode){
     const fallbackText = presBuildMessage(data, null);
     if(mode==='email'){
       const to = data.cliEmail;
-      location.href = `mailto:${to}?subject=${encodeURIComponent('Presupuesto N° '+presState.numero)}&body=${encodeURIComponent(fallbackText)}`;
+      const subj = 'Presupuesto N° '+presState.numero;
+      window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subj)}&body=${encodeURIComponent(fallbackText)}`, '_blank');
     } else {
       const phone = (data.cliPhone||'').replace(/\D/g,'');
       window.open(`https://wa.me/${phone}?text=${encodeURIComponent(fallbackText)}`, '_blank');
@@ -2955,8 +2956,10 @@ async function presShare(mode){
   if(mode === 'email'){
     const to = data.cliEmail;
     if(!to){ alert('El cliente no tiene email registrado.'); presSetStatus('',''); return; }
-    location.href = `mailto:${to}?subject=${encodeURIComponent('Presupuesto N° '+presState.numero+' — Daniel Marrero')}&body=${encodeURIComponent(msg)}`;
-    presSetStatus('Email abierto. Link al PDF incluido.', 'ok');
+    const subj = 'Presupuesto N° '+presState.numero+' — Daniel Marrero';
+    // Opens Gmail compose (web or app on mobile)
+    window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subj)}&body=${encodeURIComponent(msg)}`, '_blank');
+    presSetStatus('Gmail abierto con el borrador. Revisa y presiona Enviar.', 'ok');
   } else if(mode === 'whatsapp'){
     const phone = (data.cliPhone||'').replace(/\D/g,'');
     if(!phone){ alert('El cliente no tiene WhatsApp/fono registrado.'); presSetStatus('',''); return; }
