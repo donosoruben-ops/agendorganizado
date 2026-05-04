@@ -2907,6 +2907,18 @@ function presSetStatus(msg, kind){
   el.style.background = bg; el.style.color = fg;
 }
 
+function isMobileDevice(){
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+function buildEmailURL(to, subj, body){
+  // On mobile → mailto: (opens default email app, usually Gmail on Android/iOS)
+  // On desktop → Gmail Web compose (opens Gmail in new tab)
+  if(isMobileDevice()){
+    return `mailto:${to}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+  }
+  return `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+}
+
 async function presShare(mode){
   const name = document.getElementById('presClientName').value.trim();
   if(!name){ alert('Ingresa el nombre del cliente.'); return; }
@@ -2914,15 +2926,17 @@ async function presShare(mode){
 
   // Validate destination BEFORE async work, then open the window SYNCHRONOUSLY
   // (browsers block window.open after async/await — popup-blocker preserves user-gesture only on direct click)
+  const mobile = isMobileDevice();
   let popupWin = null;
   if(mode === 'email'){
     const emailInput = document.getElementById('presClientEmail').value.trim();
     if(!emailInput){ alert('El cliente no tiene email registrado.'); return; }
-    popupWin = window.open('about:blank', '_blank');
+    // On desktop open a blank tab synchronously; on mobile, mailto: will be triggered via location.href later
+    if(!mobile) popupWin = window.open('about:blank', '_blank');
   } else if(mode === 'whatsapp'){
     const phoneInput = document.getElementById('presClientPhone').value.trim();
     if(!phoneInput){ alert('El cliente no tiene WhatsApp/fono registrado.'); return; }
-    popupWin = window.open('about:blank', '_blank');
+    if(!mobile) popupWin = window.open('about:blank', '_blank');
   }
 
   presSetStatus('Generando PDF...', 'info');
@@ -2957,12 +2971,16 @@ async function presShare(mode){
     if(mode==='email'){
       const to = data.cliEmail;
       const subj = 'Presupuesto N° '+presState.numero;
-      const targetURL = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subj)}&body=${encodeURIComponent(fallbackText)}`;
-      if(popupWin && !popupWin.closed) popupWin.location.href = targetURL; else window.open(targetURL,'_blank');
+      const targetURL = buildEmailURL(to, subj, fallbackText);
+      if(mobile) location.href = targetURL;
+      else if(popupWin && !popupWin.closed) popupWin.location.href = targetURL;
+      else window.open(targetURL,'_blank');
     } else {
       const phone = (data.cliPhone||'').replace(/\D/g,'');
       const targetURL = `https://wa.me/${phone}?text=${encodeURIComponent(fallbackText)}`;
-      if(popupWin && !popupWin.closed) popupWin.location.href = targetURL; else window.open(targetURL,'_blank');
+      if(mobile) location.href = targetURL;
+      else if(popupWin && !popupWin.closed) popupWin.location.href = targetURL;
+      else window.open(targetURL,'_blank');
     }
     return;
   }
@@ -2971,14 +2989,31 @@ async function presShare(mode){
   if(mode === 'email'){
     const to = data.cliEmail;
     const subj = 'Presupuesto N° '+presState.numero+' — Daniel Marrero';
-    const targetURL = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subj)}&body=${encodeURIComponent(msg)}`;
-    if(popupWin && !popupWin.closed) popupWin.location.href = targetURL; else window.open(targetURL,'_blank');
-    presSetStatus('Gmail abierto con el borrador. Revisa y presiona Enviar.', 'ok');
+    const targetURL = buildEmailURL(to, subj, msg);
+    if(mobile){
+      // On mobile: navigate current tab to mailto: — OS intercepts and opens default email app (Gmail/Mail)
+      location.href = targetURL;
+      presSetStatus('Abriendo tu app de email con el borrador...', 'ok');
+    } else if(popupWin && !popupWin.closed){
+      popupWin.location.href = targetURL;
+      presSetStatus('Gmail abierto con el borrador. Revisa y presiona Enviar.', 'ok');
+    } else {
+      window.open(targetURL,'_blank');
+      presSetStatus('Gmail abierto con el borrador. Revisa y presiona Enviar.', 'ok');
+    }
   } else if(mode === 'whatsapp'){
     const phone = (data.cliPhone||'').replace(/\D/g,'');
     const targetURL = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
-    if(popupWin && !popupWin.closed) popupWin.location.href = targetURL; else window.open(targetURL,'_blank');
-    presSetStatus('WhatsApp abierto. Link al PDF incluido.', 'ok');
+    if(mobile){
+      location.href = targetURL;
+      presSetStatus('Abriendo WhatsApp con el mensaje...', 'ok');
+    } else if(popupWin && !popupWin.closed){
+      popupWin.location.href = targetURL;
+      presSetStatus('WhatsApp abierto. Link al PDF incluido.', 'ok');
+    } else {
+      window.open(targetURL,'_blank');
+      presSetStatus('WhatsApp abierto. Link al PDF incluido.', 'ok');
+    }
   }
 }
 
