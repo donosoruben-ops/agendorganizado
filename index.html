@@ -731,6 +731,115 @@
   </div>
 </div>
 
+<!-- ══ VOUCHER PAGO MODAL ══ -->
+<div id="voucherModal" class="modal-bg hidden">
+  <div class="modal-box" style="max-width:640px;max-height:94vh;display:flex;flex-direction:column;overflow:hidden;">
+    <div class="modal-hd" style="background:linear-gradient(135deg,#16a34a,#15803d);flex-shrink:0;">
+      <h3>🧾 Ingresar voucher de pago</h3>
+      <button type="button" onclick="closeVoucherModal()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:16px;">✕</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:16px;">
+      <!-- 1. Buscador paciente -->
+      <div style="font-size:11px;font-weight:800;color:#15803d;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">1. Buscar paciente</div>
+      <div style="position:relative;display:flex;gap:6px;align-items:stretch;margin-bottom:8px;">
+        <input id="vchSearch" class="fi" type="text" placeholder="Nombre del paciente..." oninput="vchSearchInput()" autocomplete="off" style="flex:1;">
+        <button type="button" onclick="vchVoiceSearch()" id="vchVoiceBtn" title="Buscar por voz" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:0 14px;cursor:pointer;font-size:18px;flex-shrink:0;">🎤</button>
+      </div>
+      <div id="vchSearchDrop" style="border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;max-height:200px;overflow-y:auto;display:none;margin-bottom:12px;"></div>
+      <div id="vchVoiceHint" style="font-size:11px;color:#dc2626;font-weight:700;display:none;margin-bottom:8px;">
+        <span style="animation:spin .7s linear infinite;display:inline-block;width:10px;height:10px;border:2px solid #fca5a5;border-top-color:#dc2626;border-radius:50%;vertical-align:middle;"></span>
+        Escuchando... di el nombre del paciente
+      </div>
+
+      <!-- 2. Paciente seleccionado e historial -->
+      <div id="vchPatientPanel" style="display:none;margin-top:8px;">
+        <div style="background:#f0fdf4;border:1px solid #16a34a;border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;">
+          <div>
+            <div style="font-size:11px;color:#15803d;font-weight:700;text-transform:uppercase;">Paciente</div>
+            <div id="vchPatientName" style="font-size:15px;font-weight:800;color:#0f172a;">—</div>
+            <div id="vchPatientMeta" style="font-size:11px;color:#64748b;margin-top:2px;"></div>
+          </div>
+          <button type="button" onclick="vchClearPatient()" style="background:#fff;border:1px solid #cbd5e1;color:#64748b;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;">Cambiar</button>
+        </div>
+        <div style="font-size:11px;font-weight:800;color:#15803d;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">Historial de pagos</div>
+        <div id="vchHistory" style="background:#f8fafc;border-radius:8px;padding:8px 10px;max-height:160px;overflow-y:auto;font-size:12px;margin-bottom:14px;"></div>
+
+        <!-- 3. Subir voucher -->
+        <div style="font-size:11px;font-weight:800;color:#15803d;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">2. Subir voucher de pago</div>
+        <div id="vchDropZone" onclick="document.getElementById('vchFileInput').click()" style="border:2px dashed #16a34a;border-radius:10px;padding:20px;text-align:center;color:#15803d;font-size:13px;cursor:pointer;background:#f0fdf4;transition:all .12s;">
+          <div style="font-size:34px;line-height:1;margin-bottom:8px;">📷</div>
+          <div style="font-weight:700;">Tomar foto / Subir imagen del voucher</div>
+          <div style="font-size:11px;color:#64748b;margin-top:4px;">JPG, PNG, WEBP — máx 8 MB</div>
+        </div>
+        <input id="vchFileInput" type="file" accept="image/*" capture="environment" style="display:none;" onchange="vchFileSelected(this)">
+        <div id="vchPreviewWrap" style="display:none;margin-top:10px;">
+          <img id="vchPreview" style="width:100%;max-height:260px;object-fit:contain;border-radius:9px;border:1px solid #e2e8f0;background:#fff;">
+          <button type="button" onclick="vchRemoveImage()" style="margin-top:6px;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;">🗑 Quitar imagen</button>
+        </div>
+
+        <!-- 4. Botón leer con IA -->
+        <button type="button" id="vchReadAiBtn" onclick="vchReadWithAI()" style="width:100%;margin-top:12px;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:.3px;disabled:opacity:.5;">
+          🤖 LA IA LEERÁ EL PAGO
+        </button>
+        <div id="vchAiStatus" style="margin-top:8px;font-size:12px;text-align:center;display:none;"></div>
+
+        <!-- 5. Form pago (autocompletado por IA, editable) -->
+        <div id="vchPaymentForm" style="display:none;margin-top:14px;border-top:2px dashed #e2e8f0;padding-top:14px;">
+          <div style="font-size:11px;font-weight:800;color:#15803d;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">3. Confirmar y registrar</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;">
+            <div class="field-group">
+              <label>Monto (CLP) *</label>
+              <input id="vchAmount" type="number" class="fi fi-sm" placeholder="0">
+            </div>
+            <div class="field-group">
+              <label>Fecha del pago *</label>
+              <input id="vchDate" type="date" class="fi fi-sm">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;">
+            <div class="field-group">
+              <label>Método</label>
+              <select id="vchMethod" class="fi fi-sm">
+                <option value="transferencia">Transferencia</option>
+                <option value="debito">Débito</option>
+                <option value="credito">Crédito</option>
+                <option value="efectivo">Efectivo</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label>Banco / Origen</label>
+              <input id="vchBank" type="text" class="fi fi-sm" placeholder="Banco Chile, Estado...">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;">
+            <div class="field-group">
+              <label>N° Operación / Ref.</label>
+              <input id="vchRef" type="text" class="fi fi-sm" placeholder="Ej. 12345678">
+            </div>
+            <div class="field-group">
+              <label>Origen (split finanzas)</label>
+              <select id="vchOrigin" class="fi fi-sm">
+                <option value="propio">Paciente de Daniel Marrero (80/20)</option>
+                <option value="doctoraA">Derivado Clínica MES (75/25)</option>
+                <option value="doctoraB">Derivado Clínica ABBA (20/80)</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-group" style="margin-bottom:8px;">
+            <label>Notas</label>
+            <textarea id="vchNotes" class="fi fi-sm" rows="2" placeholder="Detalles adicionales del voucher..."></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-ft" style="flex-shrink:0;">
+      <button type="button" class="btn-cancel" onclick="closeVoucherModal()">Cancelar</button>
+      <button type="button" id="vchSaveBtn" class="btn-save" onclick="vchSavePayment()" style="background:#16a34a;display:none;">💾 Guardar pago en finanzas</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ AI CHAT MODAL ══ -->
 <div id="aiChatModal" class="modal-bg hidden">
   <div class="modal-box" style="max-width:480px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;">
@@ -1324,6 +1433,7 @@ async function startSync(){
     renderCalendar();
   }, ()=>setSyncColor('red'));
   startPatientsSync();
+  startVoucherPaymentsSync();
   migrateLocal();
 }
 async function migrateLocal(){
@@ -1964,14 +2074,41 @@ function renderPatFinanzas(){
   const visits=getPatientVisits(p);
   let total=0, dan=0, clin=0, abba=0;
   visits.forEach(v=>{ const a=Number(v.amount)||0; total+=a; const sp=splitAmount(a,v.origin||'propio'); dan+=sp.daniel; clin+=sp.clinic; abba+=sp.doctor; });
+  const vchs = getPatientVoucherPayments(p);
+  let vchTotal=0;
+  vchs.forEach(v=>{ const a=Number(v.monto)||0; vchTotal+=a; const sp=splitAmount(a, v.origin||'propio'); dan+=sp.daniel; clin+=sp.clinic; abba+=sp.doctor; });
+  const grandTotal = total + vchTotal;
+
   document.getElementById('ppTab_finanzas').innerHTML=`
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
       <div class="stat-card"><div class="stat-lbl">Total citas</div><div class="stat-val">${visits.length}</div></div>
-      <div class="stat-card"><div class="stat-lbl">Total pagado</div><div class="stat-val" style="font-size:18px;">${money(total)}</div></div>
+      <div class="stat-card"><div class="stat-lbl">Total pagado</div><div class="stat-val" style="font-size:18px;">${money(grandTotal)}</div></div>
       <div class="stat-card"><div class="stat-lbl">Para Daniel</div><div class="stat-val" style="font-size:18px;color:#1d4ed8;">${money(dan)}</div></div>
       <div class="stat-card"><div class="stat-lbl">Para clínicas</div><div class="stat-val" style="font-size:18px;color:#7c3aed;">${money(clin+abba)}</div></div>
     </div>
-    ${visits.length===0?'<p style="color:#94a3b8;font-size:13px;text-align:center;padding:24px 0;">Sin movimientos registrados.</p>':''}
+    ${vchs.length?`
+      <div class="pp-section-title">🧾 Vouchers ingresados (${vchs.length}) — ${money(vchTotal)}</div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
+        ${vchs.map(v=>{
+          const d = v.fecha?parseDateKey(v.fecha).toLocaleDateString('es-CL',{day:'2-digit',month:'short',year:'numeric'}):'—';
+          return `<div style="border-left:3px solid #16a34a;padding:8px 12px;border-radius:0 7px 7px 0;background:#f0fdf4;">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+              <div style="min-width:0;flex:1;">
+                <div style="font-size:12px;font-weight:700;color:#0f172a;">${d} · ${escH(v.method||'pago')}${v.bank?' · '+escH(v.bank):''}</div>
+                ${v.refNum?`<div style="font-size:10px;color:#64748b;">Ref: ${escH(v.refNum)}</div>`:''}
+                ${v.notes?`<div style="font-size:10px;color:#94a3b8;font-style:italic;">${escH(v.notes)}</div>`:''}
+              </div>
+              <div style="text-align:right;flex-shrink:0;">
+                <div style="font-weight:800;color:#15803d;">${money(Number(v.monto)||0)}</div>
+                ${v.imageUrl?`<a href="${v.imageUrl}" target="_blank" style="font-size:10px;color:#1d4ed8;">Ver imagen</a>`:''}
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    `:''}
+    <button type="button" onclick="closePatProfileModal();openVoucherModal('${p.id}')" class="btn-save" style="width:100%;background:#16a34a;margin-top:6px;">🧾 Ingresar voucher de pago</button>
+    ${(visits.length===0 && vchs.length===0)?'<p style="color:#94a3b8;font-size:13px;text-align:center;padding:24px 0;">Sin movimientos registrados.</p>':''}
   `;
 }
 
@@ -2010,7 +2147,8 @@ function renderPacientes(){
   const unregList=unregistered.filter(p=>!q||p.name.toLowerCase().includes(q));
 
   let html=`<div class="pat-card-new" onclick="openNewPatientModal()" style="grid-column:span 1;">➕ Nuevo paciente</div>
-    <div class="pat-card-new" onclick="openPresupuestoModal()" style="grid-column:span 1;background:linear-gradient(135deg,#1a56b0,#1e40af);color:#fff;border:none;">📋 Crear presupuesto</div>`;
+    <div class="pat-card-new" onclick="openPresupuestoModal()" style="grid-column:span 1;background:linear-gradient(135deg,#1a56b0,#1e40af);color:#fff;border:none;">📋 Crear presupuesto</div>
+    <div class="pat-card-new" onclick="openVoucherModal()" style="grid-column:span 1;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;">🧾 Ingresar voucher pago de paciente</div>`;
 
   if(!regList.length&&!unregList.length){
     html+='<div style="color:#94a3b8;font-size:13px;padding:12px;">No se encontraron pacientes.</div>';
@@ -2064,39 +2202,84 @@ function renderPacientes(){
 function renderFinanzas(){
   const fin=document.getElementById('finContent'); if(!fin) return;
   const all=getAllStats();
+  const vchAll=getAllVoucherStats();
   const monthStats={};
   Object.keys(state.appointments).forEach(dk=>{
     const [y,m]=dk.split('-'); const key=`${y}-${m}`;
-    if(!monthStats[key]) monthStats[key]={gross:0,count:0,daniel:0};
+    if(!monthStats[key]) monthStats[key]={gross:0,count:0,daniel:0,vchGross:0,vchCount:0};
     const s=getDayStats(dk); monthStats[key].gross+=s.gross; monthStats[key].count+=s.count; monthStats[key].daniel+=s.daniel;
   });
+  const vchMonths = getVoucherStatsByMonth();
+  Object.entries(vchMonths).forEach(([key,v])=>{
+    if(!monthStats[key]) monthStats[key]={gross:0,count:0,daniel:0,vchGross:0,vchCount:0};
+    monthStats[key].vchGross = v.gross;
+    monthStats[key].vchCount = v.count;
+    monthStats[key].daniel += v.daniel;
+  });
   const months=Object.keys(monthStats).sort().reverse().slice(0,12);
+
+  const grandGross = all.gross + vchAll.gross;
+  const grandDaniel = all.daniel + vchAll.daniel;
+  const grandClinic = all.clinic + vchAll.clinic;
+  const grandDoctor = all.doctor + vchAll.doctor;
+
+  // Recent vouchers list
+  const recentVouchers = Object.values(voucherPaymentsDB)
+    .sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''))
+    .slice(0,8);
+
   fin.innerHTML=`
     <h2 style="font-size:18px;font-weight:800;color:#1e3a8a;margin-bottom:16px">Finanzas</h2>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px;">
       <div class="stat-card"><div class="stat-lbl">Atenciones totales</div><div class="stat-val">${all.count}</div></div>
-      <div class="stat-card"><div class="stat-lbl">Total facturado</div><div class="stat-val" style="font-size:20px">${money(all.gross)}</div></div>
-      <div class="stat-card"><div class="stat-lbl">Daniel Marrero</div><div class="stat-val" style="font-size:20px;color:#1d4ed8">${money(all.daniel)}</div></div>
-      <div class="stat-card"><div class="stat-lbl">Clínica MES</div><div class="stat-val" style="font-size:20px;color:#7c3aed">${money(all.clinic)}</div></div>
-      <div class="stat-card"><div class="stat-lbl">Clínica ABBA</div><div class="stat-val" style="font-size:20px;color:#be185d">${money(all.doctor)}</div></div>
+      <div class="stat-card"><div class="stat-lbl">Total facturado</div><div class="stat-val" style="font-size:20px">${money(grandGross)}</div></div>
+      <div class="stat-card"><div class="stat-lbl">Daniel Marrero</div><div class="stat-val" style="font-size:20px;color:#1d4ed8">${money(grandDaniel)}</div></div>
+      <div class="stat-card"><div class="stat-lbl">Clínica MES</div><div class="stat-val" style="font-size:20px;color:#7c3aed">${money(grandClinic)}</div></div>
+      <div class="stat-card"><div class="stat-lbl">Clínica ABBA</div><div class="stat-val" style="font-size:20px;color:#be185d">${money(grandDoctor)}</div></div>
     </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px;">
+      <div class="stat-card" style="background:#f0fdf4;border-color:#86efac;"><div class="stat-lbl" style="color:#15803d;">Citas (caja)</div><div class="stat-val" style="font-size:18px;color:#1d4ed8;">${money(all.gross)}</div><div style="font-size:11px;color:#64748b;">${all.count} atenciones</div></div>
+      <div class="stat-card" style="background:#f0fdf4;border-color:#86efac;"><div class="stat-lbl" style="color:#15803d;">🧾 Vouchers ingresados</div><div class="stat-val" style="font-size:18px;color:#16a34a;">${money(vchAll.gross)}</div><div style="font-size:11px;color:#64748b;">${vchAll.count} voucher(s)</div></div>
+    </div>
+
     <h3 style="font-size:14px;font-weight:700;color:#374151;margin-bottom:10px">Por mes</h3>
-    <div style="display:flex;flex-direction:column;gap:6px;">
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:24px;">
       ${months.map(k=>{
         const [y,m]=k.split('-'); const label=new Date(+y,+m-1,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'});
         const s=monthStats[k];
+        const monthTotal = s.gross + s.vchGross;
         return `<div class="stat-card" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;">
           <div>
             <div style="font-weight:700;font-size:13px;color:#0f172a;text-transform:capitalize">${label}</div>
-            <div style="font-size:12px;color:#64748b">${s.count} atenciones</div>
+            <div style="font-size:12px;color:#64748b">${s.count} atenciones${s.vchCount?' · '+s.vchCount+' voucher(s)':''}</div>
           </div>
           <div style="text-align:right">
-            <div style="font-weight:800;font-size:15px;color:#1d4ed8">${money(s.gross)}</div>
-            <div style="font-size:11px;color:#64748b">Daniel: ${money(s.daniel)}</div>
+            <div style="font-weight:800;font-size:15px;color:#1d4ed8">${money(monthTotal)}</div>
+            <div style="font-size:11px;color:#64748b">Daniel: ${money(s.daniel)}${s.vchGross?' · 🧾 '+money(s.vchGross):''}</div>
           </div>
         </div>`;
       }).join('')||'<div style="color:#94a3b8;font-size:13px">Sin datos.</div>'}
-    </div>`;
+    </div>
+
+    ${recentVouchers.length?`
+      <h3 style="font-size:14px;font-weight:700;color:#374151;margin-bottom:10px">🧾 Vouchers recientes</h3>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        ${recentVouchers.map(v=>{
+          const d = v.fecha?parseDateKey(v.fecha).toLocaleDateString('es-CL',{day:'2-digit',month:'short',year:'2-digit'}):'—';
+          return `<div class="stat-card" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;">
+            <div style="min-width:0;flex:1;">
+              <div style="font-weight:700;font-size:13px;color:#0f172a;">${escH(v.patientName||'—')}</div>
+              <div style="font-size:11px;color:#64748b;">${d} · ${escH(v.method||'pago')}${v.bank?' · '+escH(v.bank):''}${v.refNum?' · Ref '+escH(v.refNum):''}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+              <div style="font-weight:800;color:#15803d;">${money(Number(v.monto)||0)}</div>
+              ${v.imageUrl?`<a href="${v.imageUrl}" target="_blank" style="font-size:10px;color:#1d4ed8;">Ver imagen</a>`:''}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    `:''}
+  `;
 }
 
 // ════ NAVIGATION ════
@@ -3035,7 +3218,432 @@ function presBuildMessage(data, url){
 // Click-outside close for presupuesto modal
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('presModal')?.addEventListener('click',e=>{ if(e.target.id==='presModal') closePresupuestoModal(); });
+  document.getElementById('voucherModal')?.addEventListener('click',e=>{ if(e.target.id==='voucherModal') closeVoucherModal(); });
 });
+
+// ════════════════════════════════════════════════════════════
+// ════ VOUCHER PAYMENTS — IA Vision ════
+// ════════════════════════════════════════════════════════════
+let voucherPaymentsDB = {}; // { id: voucher }
+let vchState = { patientId: null, patientName: '', imageDataUrl: null, imageBlob: null };
+
+function startVoucherPaymentsSync(){
+  if(!db) return;
+  db.collection('voucherPayments').onSnapshot(snap=>{
+    const ids=[];
+    snap.forEach(doc=>{ voucherPaymentsDB[doc.id]={...doc.data(), id:doc.id}; ids.push(doc.id); });
+    Object.keys(voucherPaymentsDB).forEach(id=>{ if(!ids.includes(id)) delete voucherPaymentsDB[id]; });
+    if(currentView==='finanzas') renderFinanzas();
+    if(currentView==='pacientes') renderPacientes();
+    if(viewingPatientId && !document.getElementById('patProfileModal').classList.contains('hidden')){
+      const tab=document.querySelector('.pp-tab.active')?.dataset.tab;
+      if(tab==='finanzas') renderPatFinanzas();
+    }
+    if(!document.getElementById('voucherModal').classList.contains('hidden') && vchState.patientId){
+      vchRenderHistory();
+    }
+  }, e=>console.warn('Vouchers:', e));
+}
+
+function getPatientVoucherPayments(p){
+  if(!p) return [];
+  const fullName = patientFullName(p).toLowerCase();
+  const first = (p.nombre||'').toLowerCase();
+  return Object.values(voucherPaymentsDB)
+    .filter(v=>{
+      if(v.patientId && v.patientId===p.id) return true;
+      const n=(v.patientName||'').toLowerCase();
+      return n===fullName || n===first;
+    })
+    .sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+}
+
+function getAllVoucherStats(){
+  const t={count:0, gross:0, daniel:0, clinic:0, doctor:0};
+  Object.values(voucherPaymentsDB).forEach(v=>{
+    const a=Number(v.monto)||0;
+    t.count++; t.gross+=a;
+    const sp=splitAmount(a, v.origin||'propio');
+    t.daniel+=sp.daniel; t.clinic+=sp.clinic; t.doctor+=sp.doctor;
+  });
+  return t;
+}
+function getVoucherStatsByMonth(){
+  const months={};
+  Object.values(voucherPaymentsDB).forEach(v=>{
+    const f=v.fecha; if(!f) return;
+    const key=f.slice(0,7); // YYYY-MM
+    if(!months[key]) months[key]={gross:0,count:0,daniel:0};
+    const a=Number(v.monto)||0;
+    months[key].gross+=a; months[key].count++;
+    const sp=splitAmount(a, v.origin||'propio');
+    months[key].daniel+=sp.daniel;
+  });
+  return months;
+}
+
+function openVoucherModal(prefillPatientId){
+  vchState = { patientId: null, patientName:'', imageDataUrl: null, imageBlob: null };
+  document.getElementById('vchSearch').value='';
+  document.getElementById('vchSearchDrop').style.display='none';
+  document.getElementById('vchPatientPanel').style.display='none';
+  document.getElementById('vchPaymentForm').style.display='none';
+  document.getElementById('vchSaveBtn').style.display='none';
+  document.getElementById('vchAiStatus').style.display='none';
+  document.getElementById('vchPreviewWrap').style.display='none';
+  document.getElementById('vchFileInput').value='';
+  ['vchAmount','vchBank','vchRef','vchNotes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('vchDate').value = toDateKey(new Date());
+  document.getElementById('vchMethod').value='transferencia';
+  document.getElementById('vchOrigin').value='propio';
+  document.getElementById('voucherModal').classList.remove('hidden');
+  if(prefillPatientId && patientsDB[prefillPatientId]){
+    vchSelectPatient(prefillPatientId);
+  } else {
+    setTimeout(()=>document.getElementById('vchSearch').focus(), 80);
+  }
+}
+function closeVoucherModal(){
+  document.getElementById('voucherModal').classList.add('hidden');
+}
+
+function vchSearchInput(){
+  const q=document.getElementById('vchSearch').value.trim().toLowerCase();
+  const drop=document.getElementById('vchSearchDrop');
+  if(q.length<2){ drop.style.display='none'; drop.innerHTML=''; return; }
+
+  const reg = Object.values(patientsDB)
+    .filter(p=>patientFullName(p).toLowerCase().includes(q) || (p.nombre||'').toLowerCase().includes(q))
+    .slice(0,10);
+
+  // Also include unregistered patients from appointments
+  const known = getKnownPatients().filter(p=>p.name.toLowerCase().includes(q)).slice(0,5);
+  const regNames = new Set(reg.map(p=>patientFullName(p).toLowerCase()));
+  const unreg = known.filter(p=>!regNames.has(p.name.toLowerCase()));
+
+  if(!reg.length && !unreg.length){
+    drop.innerHTML = `<div style="padding:12px;color:#94a3b8;font-size:13px;">Sin coincidencias para "${escH(q)}".</div>`;
+  } else {
+    let html = reg.map(p=>{
+      const visits = getPatientVisits(p);
+      return `<div onclick="vchSelectPatient('${p.id}')" style="padding:9px 12px;cursor:pointer;border-bottom:1px solid #e2e8f0;background:#fff;">
+        <div style="font-weight:700;font-size:13px;color:#0f172a;">${escH(patientFullName(p))}</div>
+        <div style="font-size:11px;color:#64748b;">Ficha #${p.ficha||'—'} · ${visits.length} cita(s)${p.tel1?' · '+escH(p.tel1):''}</div>
+      </div>`;
+    }).join('');
+    if(unreg.length){
+      html += `<div style="padding:6px 12px;font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.4px;background:#f1f5f9;">Sin ficha registrada</div>`;
+      html += unreg.map(p=>{
+        const safeName = escH(p.name).replace(/'/g, "\\'");
+        return `<div onclick="vchSelectByName('${safeName}')" style="padding:9px 12px;cursor:pointer;border-bottom:1px solid #e2e8f0;background:#fff;font-style:italic;">
+          <div style="font-weight:700;font-size:13px;color:#0f172a;">${escH(p.name)}</div>
+          <div style="font-size:11px;color:#94a3b8;">${p.count} cita(s) — sin ficha</div>
+        </div>`;
+      }).join('');
+    }
+    drop.innerHTML = html;
+  }
+  drop.style.display='block';
+}
+
+function vchSelectPatient(id){
+  const p = patientsDB[id]; if(!p) return;
+  vchState.patientId = id;
+  vchState.patientName = patientFullName(p);
+  document.getElementById('vchSearchDrop').style.display='none';
+  document.getElementById('vchSearch').value = vchState.patientName;
+  document.getElementById('vchPatientName').textContent = vchState.patientName;
+  document.getElementById('vchPatientMeta').textContent = `Ficha #${p.ficha||'—'}${p.tel1?' · '+p.tel1:''}${p.email?' · '+p.email:''}`;
+  document.getElementById('vchPatientPanel').style.display='block';
+  vchRenderHistory();
+}
+
+function vchSelectByName(name){
+  // Patient without ficha — store name only
+  vchState.patientId = null;
+  vchState.patientName = name;
+  document.getElementById('vchSearchDrop').style.display='none';
+  document.getElementById('vchSearch').value = name;
+  document.getElementById('vchPatientName').textContent = name;
+  document.getElementById('vchPatientMeta').textContent = 'Sin ficha registrada';
+  document.getElementById('vchPatientPanel').style.display='block';
+  vchRenderHistory();
+}
+
+function vchClearPatient(){
+  vchState.patientId=null; vchState.patientName='';
+  document.getElementById('vchPatientPanel').style.display='none';
+  document.getElementById('vchPaymentForm').style.display='none';
+  document.getElementById('vchSaveBtn').style.display='none';
+  document.getElementById('vchSearch').value='';
+  document.getElementById('vchSearch').focus();
+}
+
+function vchRenderHistory(){
+  const wrap = document.getElementById('vchHistory');
+  // Combine: appointment payments + voucher payments
+  let appts = [];
+  let vouchers = [];
+  if(vchState.patientId && patientsDB[vchState.patientId]){
+    appts = getPatientVisits(patientsDB[vchState.patientId]).filter(v=>Number(v.amount)>0);
+    vouchers = getPatientVoucherPayments(patientsDB[vchState.patientId]);
+  } else if(vchState.patientName){
+    const k = vchState.patientName.toLowerCase();
+    Object.entries(state.appointments).forEach(([dk,day])=>{
+      HOURS.forEach(h=>{ allBoxKeys(h).forEach(sk=>{
+        const s=day[sk]||{}; const n=(s.patient||'').trim().toLowerCase();
+        if(n===k && Number(s.amount)>0) appts.push({dateKey:dk, hour:h, ...s});
+      }); });
+    });
+    vouchers = Object.values(voucherPaymentsDB).filter(v=>(v.patientName||'').toLowerCase()===k);
+  }
+
+  const items = [
+    ...appts.map(a=>({type:'cita', date:a.dateKey, monto:Number(a.amount)||0, label:a.attentionType||'Cita', extra:`${pad(a.hour)}:00`})),
+    ...vouchers.map(v=>({type:'voucher', date:v.fecha||'', monto:Number(v.monto)||0, label:`🧾 Voucher · ${v.method||'pago'}`, extra:v.bank||v.refNum||''}))
+  ].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+
+  const total = items.reduce((s,i)=>s+i.monto,0);
+  const totalVch = vouchers.reduce((s,v)=>s+(Number(v.monto)||0),0);
+
+  if(!items.length){
+    wrap.innerHTML = `<div style="color:#94a3b8;padding:6px 0;">Sin pagos registrados aún.</div>`;
+    return;
+  }
+  wrap.innerHTML = `
+    <div style="display:flex;justify-content:space-between;font-weight:700;color:#15803d;border-bottom:1px solid #e2e8f0;padding-bottom:5px;margin-bottom:6px;">
+      <span>Total acumulado</span><span>${money(total)}</span>
+    </div>
+    ${totalVch?`<div style="display:flex;justify-content:space-between;font-size:11px;color:#7c3aed;margin-bottom:6px;"><span>Vouchers registrados</span><span>${money(totalVch)}</span></div>`:''}
+    ${items.slice(0,8).map(i=>{
+      const d = i.date?parseDateKey(i.date).toLocaleDateString('es-CL',{day:'2-digit',month:'short',year:'2-digit'}):'—';
+      const color = i.type==='voucher' ? '#7c3aed' : '#1d4ed8';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px dashed #e2e8f0;">
+        <div style="min-width:0;flex:1;">
+          <div style="font-size:12px;font-weight:600;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escH(i.label)}</div>
+          <div style="font-size:10px;color:#94a3b8;">${d}${i.extra?' · '+escH(i.extra):''}</div>
+        </div>
+        <div style="font-weight:700;color:${color};font-size:12px;">${money(i.monto)}</div>
+      </div>`;
+    }).join('')}
+    ${items.length>8?`<div style="font-size:10px;color:#94a3b8;text-align:center;margin-top:4px;">... y ${items.length-8} más</div>`:''}
+  `;
+}
+
+function vchVoiceSearch(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ alert('Tu navegador no soporta reconocimiento de voz. Usa Chrome.'); return; }
+  const recog = new SR();
+  recog.lang='es-ES'; recog.interimResults=false; recog.maxAlternatives=1;
+  const hint = document.getElementById('vchVoiceHint');
+  const btn = document.getElementById('vchVoiceBtn');
+  hint.style.display='block';
+  btn.style.background='#dc2626';
+  recog.start();
+  recog.onresult = (e)=>{
+    const text = e.results[0][0].transcript.trim();
+    document.getElementById('vchSearch').value = text;
+    vchSearchInput();
+    // Auto-select if exact match
+    const exact = Object.values(patientsDB).find(p=>{
+      const fn=patientFullName(p).toLowerCase(), n=(p.nombre||'').toLowerCase(), q=text.toLowerCase();
+      return fn===q || n===q || fn.startsWith(q);
+    });
+    if(exact) vchSelectPatient(exact.id);
+  };
+  const reset=()=>{ hint.style.display='none'; btn.style.background='#7c3aed'; };
+  recog.onerror = ()=>{ reset(); alert('Error de micrófono. Intenta de nuevo.'); };
+  recog.onend = reset;
+}
+
+function vchFileSelected(input){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  if(file.size > 8 * 1024 * 1024){ alert('La imagen excede 8 MB.'); input.value=''; return; }
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    vchState.imageDataUrl = reader.result;
+    vchState.imageBlob = file;
+    document.getElementById('vchPreview').src = reader.result;
+    document.getElementById('vchPreviewWrap').style.display='block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function vchRemoveImage(){
+  vchState.imageDataUrl = null; vchState.imageBlob = null;
+  document.getElementById('vchFileInput').value='';
+  document.getElementById('vchPreviewWrap').style.display='none';
+}
+
+function vchSetAiStatus(msg, kind){
+  const el = document.getElementById('vchAiStatus');
+  if(!msg){ el.style.display='none'; return; }
+  const palette = {info:['#dbeafe','#1d4ed8'], ok:['#dcfce7','#15803d'], err:['#fee2e2','#b91c1c'], warn:['#fef9c3','#92400e']};
+  const [bg,fg] = palette[kind||'info'];
+  el.style.display='block';
+  el.style.background=bg; el.style.color=fg;
+  el.style.borderRadius='6px'; el.style.padding='6px 10px';
+  el.innerHTML = msg;
+}
+
+async function vchReadWithAI(){
+  if(!vchState.imageDataUrl){ alert('Primero sube una foto del voucher.'); return; }
+  const apiKey = localStorage.getItem('claudeApiKey');
+  if(!apiKey){
+    alert('No hay API Key de Claude configurada. Ábrela desde el botón 🤖 (Asistente IA) para configurarla.');
+    return;
+  }
+  const btn = document.getElementById('vchReadAiBtn');
+  btn.disabled = true; btn.style.opacity='.6';
+  vchSetAiStatus('🔍 Analizando voucher con IA...', 'info');
+
+  // Extract base64 + media type
+  const m = vchState.imageDataUrl.match(/^data:(image\/[a-zA-Z+.\-]+);base64,(.+)$/);
+  if(!m){ vchSetAiStatus('Formato de imagen no soportado.', 'err'); btn.disabled=false; btn.style.opacity='1'; return; }
+  const mediaType = m[1]; const base64 = m[2];
+
+  const prompt = `Analiza esta imagen de un comprobante o voucher de pago (puede ser una transferencia bancaria, depósito, captura de app bancaria, boleta, etc) y extrae la información en JSON.
+
+Devuelve SOLO un objeto JSON válido (sin texto antes ni después) con estos campos:
+{
+  "monto": <number, monto en CLP sin puntos ni símbolos>,
+  "fecha": "<YYYY-MM-DD>",
+  "metodo": "<transferencia|debito|credito|efectivo|otro>",
+  "banco": "<nombre del banco origen, o vacío>",
+  "ref": "<número de operación/referencia, o vacío>",
+  "destinatario": "<nombre del destinatario si aparece, o vacío>",
+  "remitente": "<nombre del pagador si aparece, o vacío>",
+  "notas": "<otra info relevante: glosa, comentario, etc>"
+}
+
+Si algún campo no se identifica claramente, usa "" para strings o 0 para monto. Si el monto está en formato chileno con puntos (ej: $1.250.000), conviértelo a número entero (1250000).`;
+
+  try{
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 600,
+        messages: [{
+          role: 'user',
+          content: [
+            { type:'image', source:{ type:'base64', media_type: mediaType, data: base64 } },
+            { type:'text', text: prompt }
+          ]
+        }]
+      })
+    });
+    if(!res.ok){
+      const errTxt = await res.text();
+      throw new Error('HTTP '+res.status+': '+errTxt.slice(0,200));
+    }
+    const data = await res.json();
+    const content = data.content?.[0]?.text || '';
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if(!jsonMatch) throw new Error('La IA no devolvió JSON');
+    const parsed = JSON.parse(jsonMatch[0]);
+
+    // Fill form
+    if(parsed.monto && Number(parsed.monto)>0) document.getElementById('vchAmount').value = Math.round(Number(parsed.monto));
+    if(parsed.fecha && /^\d{4}-\d{2}-\d{2}$/.test(parsed.fecha)) document.getElementById('vchDate').value = parsed.fecha;
+    if(parsed.metodo){
+      const valid = ['transferencia','debito','credito','efectivo','otro'];
+      const v = String(parsed.metodo).toLowerCase();
+      if(valid.includes(v)) document.getElementById('vchMethod').value = v;
+    }
+    if(parsed.banco) document.getElementById('vchBank').value = parsed.banco;
+    if(parsed.ref) document.getElementById('vchRef').value = parsed.ref;
+    const notesParts = [];
+    if(parsed.remitente) notesParts.push('Remitente: '+parsed.remitente);
+    if(parsed.destinatario) notesParts.push('Destinatario: '+parsed.destinatario);
+    if(parsed.notas) notesParts.push(parsed.notas);
+    if(notesParts.length) document.getElementById('vchNotes').value = notesParts.join(' · ');
+
+    document.getElementById('vchPaymentForm').style.display='block';
+    document.getElementById('vchSaveBtn').style.display='inline-block';
+    vchSetAiStatus('✅ IA leyó el voucher. Revisa los datos y guarda.', 'ok');
+  }catch(e){
+    console.error(e);
+    vchSetAiStatus('❌ Error al leer con IA: '+e.message+'. Puedes ingresar los datos manualmente abajo.', 'err');
+    document.getElementById('vchPaymentForm').style.display='block';
+    document.getElementById('vchSaveBtn').style.display='inline-block';
+  }
+  btn.disabled = false; btn.style.opacity = '1';
+}
+
+async function vchUploadVoucherImage(blob, voucherId){
+  if(!fbStorage) return null;
+  try{
+    await ensureAuth();
+    const ext = (blob.type||'image/jpeg').split('/')[1].split('+')[0] || 'jpg';
+    const path = `voucherPayments/${voucherId}.${ext}`;
+    const ref = fbStorage.ref().child(path);
+    const snap = await ref.put(blob, { contentType: blob.type });
+    return await snap.ref.getDownloadURL();
+  }catch(e){ console.warn('Voucher upload:', e); return null; }
+}
+
+async function vchSavePayment(){
+  if(!vchState.patientName){ alert('Selecciona un paciente.'); return; }
+  const monto = parseInt(document.getElementById('vchAmount').value)||0;
+  const fecha = document.getElementById('vchDate').value;
+  if(monto<=0){ alert('Ingresa un monto válido.'); return; }
+  if(!fecha){ alert('Ingresa la fecha del pago.'); return; }
+
+  const btn = document.getElementById('vchSaveBtn');
+  btn.disabled=true; btn.textContent='Guardando...';
+
+  const id = 'vch_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
+  let imageUrl = null;
+  if(vchState.imageBlob){
+    vchSetAiStatus('☁️ Subiendo imagen...', 'info');
+    imageUrl = await vchUploadVoucherImage(vchState.imageBlob, id);
+  }
+
+  const voucher = {
+    id,
+    patientId: vchState.patientId || null,
+    patientName: vchState.patientName,
+    monto,
+    fecha,
+    method: document.getElementById('vchMethod').value,
+    bank: document.getElementById('vchBank').value.trim(),
+    refNum: document.getElementById('vchRef').value.trim(),
+    origin: document.getElementById('vchOrigin').value,
+    notes: document.getElementById('vchNotes').value.trim(),
+    imageUrl: imageUrl || null,
+    createdAt: new Date().toISOString(),
+    createdBy: currentSession?.name || 'desconocido'
+  };
+
+  voucherPaymentsDB[id] = voucher;
+
+  if(db){
+    try{
+      await ensureAuth();
+      await db.collection('voucherPayments').doc(id).set(voucher);
+    }catch(e){
+      console.warn('Save voucher:', e);
+      alert('No se pudo guardar en la nube. Se guardó localmente.');
+    }
+  }
+
+  btn.disabled=false; btn.textContent='💾 Guardar pago en finanzas';
+  vchSetAiStatus(`✅ Pago de ${money(monto)} registrado para ${escH(vchState.patientName)}.`, 'ok');
+
+  // Refresh views
+  if(currentView==='finanzas') renderFinanzas();
+  if(currentView==='pacientes') renderPacientes();
+
+  setTimeout(()=>{ closeVoucherModal(); }, 1200);
+}
 </script>
 </body>
 </html>
