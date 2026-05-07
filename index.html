@@ -1857,7 +1857,7 @@ function openApptModal(dateKey, hour, box){
   if(currentSessionData && slot.isEvaluation){
     currentSessionData.items.forEach(it=>{ it.status='pending'; });
   }
-  refreshEvalToggle(slot, !!(currentSessionData && currentSessionData.total>1));
+  refreshEvalToggle(slot);
   renderSessionTracker();
 
   selectStatus(slot.status||'pending');
@@ -2024,19 +2024,33 @@ function toggleEvaluation(checked){
   renderSessionTracker();
 }
 
-function refreshEvalToggle(slot, hasSessions){
+// Update visibility of the evaluation toggle based on current session state.
+// Reads currentSessionData directly so any caller can refresh after changing it.
+function refreshEvalToggleVisibility(){
   const wrap = document.getElementById('evalToggleWrap');
-  const cb = document.getElementById('apptIsEvaluation');
+  if(!wrap) return;
+  const hasSessions = !!(currentSessionData && currentSessionData.total>1);
   if(hasSessions){
     wrap.classList.remove('hidden');
     wrap.style.display='flex';
-    cb.checked = !!(slot && slot.isEvaluation);
-    wrap.classList.toggle('active', cb.checked);
   } else {
     wrap.classList.add('hidden');
     wrap.style.display='none';
-    cb.checked = false;
+    const cb = document.getElementById('apptIsEvaluation');
+    if(cb) cb.checked = false;
     wrap.classList.remove('active');
+  }
+}
+
+// Sync checkbox state from a slot (used when opening modal)
+function refreshEvalToggle(slot){
+  refreshEvalToggleVisibility();
+  const wrap = document.getElementById('evalToggleWrap');
+  const cb = document.getElementById('apptIsEvaluation');
+  if(!wrap || !cb) return;
+  if(currentSessionData && currentSessionData.total>1){
+    cb.checked = !!(slot && slot.isEvaluation);
+    wrap.classList.toggle('active', cb.checked);
   }
 }
 
@@ -3003,6 +3017,7 @@ function selectSvcItem(label, amount, sesCount){
     currentSessionData = null;
   }
   renderSessionTracker();
+  refreshEvalToggleVisibility();
   updateSplitPreview();
   closeSvcPicker();
 }
