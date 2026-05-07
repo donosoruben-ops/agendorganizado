@@ -1,6 +1,26 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // Solicitudes de consentimiento: legibles y respondibles por el paciente
+    // sin autenticación (acceden vía link único con id imposible de adivinar).
+    // El admin/colaborador autenticado puede CRUD completo.
+    match /consentRequests/{docId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow delete: if request.auth != null;
+      allow update: if request.auth != null
+                    || (
+                      resource.data.responseStatus == 'pending'
+                      && request.resource.data.diff(resource.data).affectedKeys()
+                          .hasOnly(['responseStatus','respondedAt','responseUserAgent'])
+                      && (request.resource.data.responseStatus == 'accepted'
+                          || request.resource.data.responseStatus == 'rejected')
+                    );
+    }
+
+    // Resto de colecciones (appointments, patients, presupuestos, voucherPayments,
+    // consentTemplates, _config, _meta, etc): requieren autenticación.
     match /{document=**} {
       allow read, write: if request.auth != null;
     }

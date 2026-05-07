@@ -17,6 +17,7 @@
       ".firebaserc"
     ],
     "rewrites": [
+      { "source": "/consent", "destination": "/consent.html" },
       { "source": "**", "destination": "/index.html" }
     ]
   }

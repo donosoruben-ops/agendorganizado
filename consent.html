@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consentimiento Informado — Daniel Marrero Cosmetólogo</title>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(140deg,#7c3aed 0%,#5b21b6 60%,#3b0764 100%);min-height:100vh;color:#0f172a;padding:14px;}
+    .card{background:#fff;border-radius:18px;max-width:760px;margin:0 auto;box-shadow:0 30px 80px rgba(0,0,0,.4);overflow:hidden;}
+    .hd{background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;padding:22px 22px 18px;text-align:center;}
+    .hd h1{font-weight:800;font-size:21px;letter-spacing:.3px;}
+    .hd .sub{font-size:12px;opacity:.85;margin-top:6px;}
+    .body{padding:18px;}
+    .meta{background:#faf5ff;border:1px solid #ddd6fe;border-radius:10px;padding:12px 14px;margin-bottom:14px;}
+    .meta .row{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;}
+    .meta .lbl{color:#7c3aed;font-weight:700;}
+    .meta .val{color:#0f172a;font-weight:600;text-align:right;word-break:break-word;}
+    .doc-wrap{border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;background:#f8fafc;margin-bottom:14px;}
+    .doc-wrap iframe{width:100%;height:60vh;min-height:420px;border:0;display:block;background:#fff;}
+    .doc-link{display:block;text-align:center;padding:14px;color:#7c3aed;font-size:14px;font-weight:700;text-decoration:none;background:#faf5ff;border-radius:10px;border:1px dashed #7c3aed;margin-bottom:14px;}
+    .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;}
+    .btn-yes,.btn-no{border:none;border-radius:12px;padding:18px 14px;font-size:15px;font-weight:800;cursor:pointer;color:#fff;transition:transform .08s,filter .12s;letter-spacing:.3px;line-height:1.3;}
+    .btn-yes{background:linear-gradient(135deg,#16a34a,#15803d);}
+    .btn-no{background:linear-gradient(135deg,#dc2626,#991b1b);}
+    .btn-yes:hover,.btn-no:hover{filter:brightness(1.08);}
+    .btn-yes:active,.btn-no:active{transform:scale(.97);}
+    .btn-yes:disabled,.btn-no:disabled{opacity:.5;cursor:not-allowed;}
+    .legal{font-size:11px;color:#64748b;text-align:center;margin-top:14px;line-height:1.55;}
+    .legal a{color:#7c3aed;}
+    .status{text-align:center;padding:30px 18px;}
+    .status .ico{font-size:54px;line-height:1;margin-bottom:10px;}
+    .status h2{font-size:19px;margin-bottom:6px;color:#0f172a;}
+    .status p{font-size:13px;color:#64748b;line-height:1.5;}
+    .err{background:#fee2e2;color:#b91c1c;border-radius:10px;padding:14px;margin-bottom:14px;font-size:13px;text-align:center;font-weight:700;}
+    .spinner{display:inline-block;width:34px;height:34px;border:4px solid #ddd6fe;border-top-color:#7c3aed;border-radius:50%;animation:spin .9s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @media(max-width:520px){
+      .doc-wrap iframe{height:48vh;}
+      .actions{grid-template-columns:1fr;}
+      .hd h1{font-size:18px;}
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="hd">
+      <h1>📋 Consentimiento informado</h1>
+      <div class="sub">Daniel Marrero Cosmetólogo</div>
+    </div>
+    <div class="body" id="body">
+      <div class="status">
+        <div class="spinner"></div>
+        <p style="margin-top:14px;color:#64748b;">Cargando consentimiento...</p>
+      </div>
+    </div>
+  </div>
+
+<script>
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyDzlLwZzjseOjMx8VNhCUFQGM11xZFk6YA",
+  authDomain:        "daniel-marrero-cosm.firebaseapp.com",
+  projectId:         "daniel-marrero-cosm",
+  storageBucket:     "daniel-marrero-cosm.firebasestorage.app",
+  messagingSenderId: "873430254007",
+  appId:             "1:873430254007:web:bdd9490bada2dbf985e832"
+};
+
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.firestore();
+
+function escH(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+const params = new URLSearchParams(location.search);
+const reqId = params.get('id');
+
+const body = document.getElementById('body');
+
+function showError(msg){
+  body.innerHTML = `<div class="err">${escH(msg)}</div>
+    <p style="text-align:center;color:#64748b;font-size:13px;">Si crees que es un error, contacta a la clínica.</p>`;
+}
+
+function showThanks(status, name){
+  const isYes = status==='accepted';
+  body.innerHTML = `<div class="status">
+    <div class="ico">${isYes?'✅':'❌'}</div>
+    <h2>${isYes?'Has autorizado el procedimiento':'No autorizaste el procedimiento'}</h2>
+    <p>Gracias ${escH(name||'')}.<br>Tu respuesta quedó registrada${isYes?' y el equipo de Daniel Marrero podrá realizar el procedimiento.':' . El equipo de Daniel Marrero NO realizará el procedimiento.'}</p>
+    <p style="margin-top:14px;font-size:11px;color:#94a3b8;">Si te equivocaste, contacta a la clínica para reenviar el consentimiento.</p>
+  </div>`;
+}
+
+async function loadRequest(){
+  if(!reqId){ showError('Link inválido. Falta el identificador del consentimiento.'); return; }
+  let docRef, snap;
+  try{
+    docRef = db.collection('consentRequests').doc(reqId);
+    snap = await docRef.get();
+  }catch(e){
+    showError('Error al cargar el consentimiento: '+e.message);
+    return;
+  }
+  if(!snap.exists){ showError('Consentimiento no encontrado o expirado.'); return; }
+  const r = snap.data();
+
+  // If already responded, show thanks
+  if(r.responseStatus==='accepted' || r.responseStatus==='rejected'){
+    showThanks(r.responseStatus, r.patientName);
+    return;
+  }
+
+  // Check explicit response in URL (from email button)
+  const respond = params.get('respond');
+  if(respond==='accept' || respond==='reject'){
+    await submitResponse(docRef, respond==='accept'?'accepted':'rejected', r.patientName);
+    return;
+  }
+
+  // Render form
+  const isPdf = (r.templateFileType||'').toLowerCase()==='pdf';
+  const docFrame = isPdf
+    ? `<iframe src="${escH(r.templateUrl)}#toolbar=0" title="Documento"></iframe>`
+    : `<iframe src="https://docs.google.com/viewer?url=${encodeURIComponent(r.templateUrl)}&embedded=true" title="Documento"></iframe>`;
+
+  body.innerHTML = `
+    <div class="meta">
+      <div class="row"><span class="lbl">Paciente:</span><span class="val">${escH(r.patientName||'—')}</span></div>
+      <div class="row"><span class="lbl">Procedimiento:</span><span class="val">${escH(r.templateName||'—')}</span></div>
+      <div class="row"><span class="lbl">Fecha de envío:</span><span class="val">${r.sentAt?new Date(r.sentAt).toLocaleString('es-CL'):'—'}</span></div>
+    </div>
+
+    <div style="font-size:13px;font-weight:700;color:#5b21b6;margin-bottom:8px;">📄 Lee el documento completo:</div>
+    <div class="doc-wrap">${docFrame}</div>
+    <a href="${escH(r.templateUrl)}" target="_blank" class="doc-link">📥 Abrir/descargar documento original (${escH(r.templateFileName||'archivo')})</a>
+
+    <div style="font-size:13px;font-weight:700;color:#0f172a;text-align:center;margin:18px 0 10px;">¿Autorizas la realización de este procedimiento cosmetológico?</div>
+
+    <div class="actions">
+      <button type="button" class="btn-yes" id="btnYes" onclick="respond('accepted')">✅<br>SÍ AUTORIZO<br><span style="font-size:11px;font-weight:600;opacity:.9;">la realización del procedimiento</span></button>
+      <button type="button" class="btn-no" id="btnNo" onclick="respond('rejected')">❌<br>NO AUTORIZO<br><span style="font-size:11px;font-weight:600;opacity:.9;">la realización del procedimiento</span></button>
+    </div>
+
+    <div class="legal">Al hacer click en una opción, tu respuesta se registra junto con la fecha, hora e información del dispositivo, y queda asociada a tu ficha clínica como evidencia legal.</div>
+  `;
+
+  window.respond = async (status)=>{
+    document.getElementById('btnYes').disabled=true;
+    document.getElementById('btnNo').disabled=true;
+    body.innerHTML = `<div class="status"><div class="spinner"></div><p style="margin-top:14px;color:#64748b;">Registrando tu respuesta...</p></div>`;
+    await submitResponse(docRef, status, r.patientName);
+  };
+}
+
+async function submitResponse(docRef, status, patientName){
+  try{
+    await docRef.update({
+      responseStatus: status,
+      respondedAt: new Date().toISOString(),
+      responseUserAgent: navigator.userAgent || ''
+    });
+    showThanks(status, patientName);
+  }catch(e){
+    showError('No se pudo registrar la respuesta: '+e.message+'. Inténtalo nuevamente o contacta a la clínica.');
+  }
+}
+
+loadRequest();
+</script>
+</body>
+</html>

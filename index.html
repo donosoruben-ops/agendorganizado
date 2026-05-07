@@ -840,6 +840,99 @@
   </div>
 </div>
 
+<!-- ══ CONSENTIMIENTOS INFORMADOS MODAL ══ -->
+<div id="consentModal" class="modal-bg hidden">
+  <div class="modal-box" style="max-width:760px;max-height:96vh;display:flex;flex-direction:column;overflow:hidden;">
+    <div class="modal-hd" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);flex-shrink:0;">
+      <h3>📋 Consentimientos informados</h3>
+      <button type="button" onclick="closeConsentModal()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:16px;">✕</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:16px;">
+
+      <!-- 1. Buscador paciente -->
+      <div style="font-size:11px;font-weight:800;color:#5b21b6;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">1. Buscar paciente</div>
+      <div style="position:relative;display:flex;gap:6px;align-items:stretch;margin-bottom:8px;">
+        <input id="csSearch" class="fi" type="text" placeholder="Nombre del paciente..." oninput="csSearchInput()" autocomplete="off" style="flex:1;">
+        <button type="button" onclick="csVoiceSearch()" id="csVoiceBtn" title="Buscar por voz" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:0 14px;cursor:pointer;font-size:18px;flex-shrink:0;">🎤</button>
+      </div>
+      <div id="csSearchDrop" style="border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;max-height:200px;overflow-y:auto;display:none;margin-bottom:12px;"></div>
+      <div id="csVoiceHint" style="font-size:11px;color:#dc2626;font-weight:700;display:none;margin-bottom:8px;">
+        <span style="animation:spin .7s linear infinite;display:inline-block;width:10px;height:10px;border:2px solid #fca5a5;border-top-color:#dc2626;border-radius:50%;vertical-align:middle;"></span>
+        Escuchando... di el nombre del paciente
+      </div>
+
+      <!-- 2. Paciente seleccionado -->
+      <div id="csPatientPanel" style="display:none;margin-top:8px;">
+        <div style="background:#faf5ff;border:1px solid #7c3aed;border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px;">
+          <div>
+            <div style="font-size:11px;color:#5b21b6;font-weight:700;text-transform:uppercase;">Paciente</div>
+            <div id="csPatientName" style="font-size:15px;font-weight:800;color:#0f172a;">—</div>
+            <div id="csPatientMeta" style="font-size:11px;color:#64748b;margin-top:2px;"></div>
+          </div>
+          <button type="button" onclick="csClearPatient()" style="background:#fff;border:1px solid #cbd5e1;color:#64748b;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;">Cambiar</button>
+        </div>
+
+        <!-- Tabs -->
+        <div style="display:flex;border-bottom:2px solid #f1f5f9;margin-bottom:14px;">
+          <div id="csTabAvailable" class="cs-tab cs-tab-active" onclick="csSwitchTab('available')" style="flex:1;padding:9px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:#7c3aed;border-bottom:3px solid #7c3aed;margin-bottom:-2px;">Disponibles</div>
+          <div id="csTabHistory" class="cs-tab" onclick="csSwitchTab('history')" style="flex:1;padding:9px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:#94a3b8;border-bottom:3px solid transparent;margin-bottom:-2px;">Enviados al paciente</div>
+        </div>
+
+        <!-- 3a. Plantillas disponibles -->
+        <div id="csPaneAvailable">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <div style="font-size:11px;font-weight:800;color:#5b21b6;text-transform:uppercase;letter-spacing:.4px;">Plantillas existentes</div>
+            <button type="button" id="csUploadBtn" onclick="csOpenUpload()" style="background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;display:none;">+ Subir nuevo (admin)</button>
+          </div>
+          <div id="csTemplatesList" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+
+        <!-- 3b. Historial de envíos -->
+        <div id="csPaneHistory" style="display:none;">
+          <div id="csHistoryList" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-ft" style="flex-shrink:0;">
+      <button type="button" class="btn-cancel" onclick="closeConsentModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SUBIR PLANTILLA CONSENTIMIENTO MODAL ══ -->
+<div id="consentUploadModal" class="modal-bg hidden" style="z-index:70;">
+  <div class="modal-box" style="max-width:480px;">
+    <div class="modal-hd" style="background:#5b21b6;">
+      <h3>+ Subir plantilla de consentimiento</h3>
+      <button type="button" onclick="csCloseUpload()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:16px;">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-group">
+        <label>Nombre del consentimiento *</label>
+        <input id="csUpName" class="fi" type="text" placeholder="Ej: Consentimiento Depilación Láser">
+      </div>
+      <div class="field-group">
+        <label>Tipo de procedimiento</label>
+        <input id="csUpType" class="fi" type="text" placeholder="Depilación, Botox, Limpieza facial...">
+      </div>
+      <div class="field-group">
+        <label>Descripción / Médico responsable</label>
+        <textarea id="csUpDesc" class="fi" rows="2" placeholder="Notas sobre el documento..."></textarea>
+      </div>
+      <div class="field-group">
+        <label>Archivo (PDF o Word) *</label>
+        <input id="csUpFile" type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="fi">
+        <span class="cfg-hint">Máx 10 MB. PDF se previsualiza directo; Word se ve via Office Online.</span>
+      </div>
+      <div id="csUpStatus" style="font-size:12px;display:none;padding:6px 10px;border-radius:6px;"></div>
+    </div>
+    <div class="modal-ft">
+      <button type="button" class="btn-cancel" onclick="csCloseUpload()">Cancelar</button>
+      <button type="button" id="csUpSaveBtn" class="btn-save" onclick="csSaveTemplate()" style="background:#7c3aed;">Subir plantilla</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ AI CHAT MODAL ══ -->
 <div id="aiChatModal" class="modal-bg hidden">
   <div class="modal-box" style="max-width:480px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;">
@@ -1434,6 +1527,8 @@ async function startSync(){
   }, ()=>setSyncColor('red'));
   startPatientsSync();
   startVoucherPaymentsSync();
+  startConsentTemplatesSync();
+  startConsentRequestsSync();
   migrateLocal();
 }
 async function migrateLocal(){
@@ -2148,7 +2243,8 @@ function renderPacientes(){
 
   let html=`<div class="pat-card-new" onclick="openNewPatientModal()" style="grid-column:span 1;">➕ Nuevo paciente</div>
     <div class="pat-card-new" onclick="openPresupuestoModal()" style="grid-column:span 1;background:linear-gradient(135deg,#1a56b0,#1e40af);color:#fff;border:none;">📋 Crear presupuesto</div>
-    <div class="pat-card-new" onclick="openVoucherModal()" style="grid-column:span 1;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;">🧾 Ingresar voucher pago de paciente</div>`;
+    <div class="pat-card-new" onclick="openVoucherModal()" style="grid-column:span 1;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;">🧾 Ingresar voucher pago de paciente</div>
+    <div class="pat-card-new" onclick="openConsentModal()" style="grid-column:span 1;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;border:none;">📋 Consentimientos informados</div>`;
 
   if(!regList.length&&!unregList.length){
     html+='<div style="color:#94a3b8;font-size:13px;padding:12px;">No se encontraron pacientes.</div>';
@@ -3219,6 +3315,8 @@ function presBuildMessage(data, url){
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('presModal')?.addEventListener('click',e=>{ if(e.target.id==='presModal') closePresupuestoModal(); });
   document.getElementById('voucherModal')?.addEventListener('click',e=>{ if(e.target.id==='voucherModal') closeVoucherModal(); });
+  document.getElementById('consentModal')?.addEventListener('click',e=>{ if(e.target.id==='consentModal') closeConsentModal(); });
+  document.getElementById('consentUploadModal')?.addEventListener('click',e=>{ if(e.target.id==='consentUploadModal') csCloseUpload(); });
 });
 
 // ════════════════════════════════════════════════════════════
@@ -3588,6 +3686,450 @@ async function vchUploadVoucherImage(blob, voucherId){
     const snap = await ref.put(blob, { contentType: blob.type });
     return await snap.ref.getDownloadURL();
   }catch(e){ console.warn('Voucher upload:', e); return null; }
+}
+
+// ════════════════════════════════════════════════════════════
+// ════ CONSENTIMIENTOS INFORMADOS ════
+// ════════════════════════════════════════════════════════════
+let consentTemplatesDB = {}; // { id: template }
+let consentRequestsDB = {};  // { id: request }
+let csState = { patientId: null, patientName: '', tab: 'available' };
+
+function startConsentTemplatesSync(){
+  if(!db) return;
+  db.collection('consentTemplates').onSnapshot(snap=>{
+    const ids=[];
+    snap.forEach(doc=>{ consentTemplatesDB[doc.id]={...doc.data(), id:doc.id}; ids.push(doc.id); });
+    Object.keys(consentTemplatesDB).forEach(id=>{ if(!ids.includes(id)) delete consentTemplatesDB[id]; });
+    if(!document.getElementById('consentModal').classList.contains('hidden') && csState.patientId){
+      csRenderTemplates();
+    }
+  }, e=>console.warn('Consent templates:', e));
+}
+
+function startConsentRequestsSync(){
+  if(!db) return;
+  db.collection('consentRequests').onSnapshot(snap=>{
+    const ids=[];
+    snap.forEach(doc=>{ consentRequestsDB[doc.id]={...doc.data(), id:doc.id}; ids.push(doc.id); });
+    Object.keys(consentRequestsDB).forEach(id=>{ if(!ids.includes(id)) delete consentRequestsDB[id]; });
+    if(!document.getElementById('consentModal').classList.contains('hidden') && csState.patientId && csState.tab==='history'){
+      csRenderHistory();
+    }
+  }, e=>console.warn('Consent requests:', e));
+}
+
+function getPatientConsentRequests(p){
+  if(!p) return [];
+  const fullName = patientFullName(p).toLowerCase();
+  return Object.values(consentRequestsDB)
+    .filter(r=>{
+      if(r.patientId && r.patientId===p.id) return true;
+      const n=(r.patientName||'').toLowerCase();
+      return n===fullName;
+    })
+    .sort((a,b)=>(b.sentAt||'').localeCompare(a.sentAt||''));
+}
+
+function openConsentModal(prefillPatientId){
+  csState = { patientId: null, patientName: '', tab: 'available' };
+  document.getElementById('csSearch').value='';
+  document.getElementById('csSearchDrop').style.display='none';
+  document.getElementById('csPatientPanel').style.display='none';
+  document.getElementById('csUploadBtn').style.display = isAdmin() ? 'inline-block' : 'none';
+  csSwitchTab('available');
+  document.getElementById('consentModal').classList.remove('hidden');
+  if(prefillPatientId && patientsDB[prefillPatientId]){
+    csSelectPatient(prefillPatientId);
+  } else {
+    setTimeout(()=>document.getElementById('csSearch').focus(), 80);
+  }
+}
+function closeConsentModal(){
+  document.getElementById('consentModal').classList.add('hidden');
+}
+
+function csSearchInput(){
+  const q=document.getElementById('csSearch').value.trim().toLowerCase();
+  const drop=document.getElementById('csSearchDrop');
+  if(q.length<2){ drop.style.display='none'; drop.innerHTML=''; return; }
+  const reg = Object.values(patientsDB)
+    .filter(p=>patientFullName(p).toLowerCase().includes(q) || (p.nombre||'').toLowerCase().includes(q))
+    .slice(0,10);
+  if(!reg.length){
+    drop.innerHTML = `<div style="padding:12px;color:#94a3b8;font-size:13px;">Sin coincidencias. Crea primero la ficha del paciente.</div>`;
+  } else {
+    drop.innerHTML = reg.map(p=>{
+      const meta = [p.email?'📧':'', p.tel1?'📱':''].filter(Boolean).join(' ');
+      return `<div onclick="csSelectPatient('${p.id}')" style="padding:9px 12px;cursor:pointer;border-bottom:1px solid #e2e8f0;background:#fff;">
+        <div style="font-weight:700;font-size:13px;color:#0f172a;">${escH(patientFullName(p))} <span style="font-size:11px;color:#94a3b8;font-weight:400;">${meta}</span></div>
+        <div style="font-size:11px;color:#64748b;">Ficha #${p.ficha||'—'}${p.tel1?' · '+escH(p.tel1):''}${p.email?' · '+escH(p.email):''}</div>
+      </div>`;
+    }).join('');
+  }
+  drop.style.display='block';
+}
+
+function csSelectPatient(id){
+  const p = patientsDB[id]; if(!p) return;
+  csState.patientId = id;
+  csState.patientName = patientFullName(p);
+  document.getElementById('csSearchDrop').style.display='none';
+  document.getElementById('csSearch').value = csState.patientName;
+  document.getElementById('csPatientName').textContent = csState.patientName;
+  const meta=[];
+  meta.push('Ficha #'+(p.ficha||'—'));
+  if(p.email) meta.push('📧 '+p.email);
+  if(p.tel1) meta.push('📱 '+p.tel1);
+  document.getElementById('csPatientMeta').textContent = meta.join(' · ');
+  document.getElementById('csPatientPanel').style.display='block';
+  csRenderTemplates();
+}
+
+function csClearPatient(){
+  csState.patientId=null; csState.patientName='';
+  document.getElementById('csPatientPanel').style.display='none';
+  document.getElementById('csSearch').value='';
+  document.getElementById('csSearch').focus();
+}
+
+function csSwitchTab(tab){
+  csState.tab = tab;
+  document.getElementById('csTabAvailable').style.color = tab==='available'?'#7c3aed':'#94a3b8';
+  document.getElementById('csTabAvailable').style.borderBottomColor = tab==='available'?'#7c3aed':'transparent';
+  document.getElementById('csTabHistory').style.color = tab==='history'?'#7c3aed':'#94a3b8';
+  document.getElementById('csTabHistory').style.borderBottomColor = tab==='history'?'#7c3aed':'transparent';
+  document.getElementById('csPaneAvailable').style.display = tab==='available'?'block':'none';
+  document.getElementById('csPaneHistory').style.display = tab==='history'?'block':'none';
+  if(tab==='available') csRenderTemplates();
+  else csRenderHistory();
+}
+
+function csVoiceSearch(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ alert('Tu navegador no soporta reconocimiento de voz. Usa Chrome.'); return; }
+  const recog = new SR();
+  recog.lang='es-ES'; recog.interimResults=false; recog.maxAlternatives=1;
+  const hint = document.getElementById('csVoiceHint');
+  const btn = document.getElementById('csVoiceBtn');
+  hint.style.display='block';
+  btn.style.background='#dc2626';
+  recog.start();
+  recog.onresult = (e)=>{
+    const text = e.results[0][0].transcript.trim();
+    document.getElementById('csSearch').value = text;
+    csSearchInput();
+    const exact = Object.values(patientsDB).find(p=>{
+      const fn=patientFullName(p).toLowerCase(), n=(p.nombre||'').toLowerCase(), q=text.toLowerCase();
+      return fn===q || n===q || fn.startsWith(q);
+    });
+    if(exact) csSelectPatient(exact.id);
+  };
+  const reset=()=>{ hint.style.display='none'; btn.style.background='#7c3aed'; };
+  recog.onerror = ()=>{ reset(); alert('Error de micrófono. Intenta de nuevo.'); };
+  recog.onend = reset;
+}
+
+function csRenderTemplates(){
+  const list = document.getElementById('csTemplatesList');
+  const tpls = Object.values(consentTemplatesDB).sort((a,b)=>(a.name||'').localeCompare(b.name||'','es'));
+  if(!tpls.length){
+    list.innerHTML = `<div style="background:#f8fafc;border:1px dashed #cbd5e1;border-radius:9px;padding:20px;text-align:center;color:#64748b;font-size:13px;">
+      No hay plantillas de consentimiento aún.${isAdmin()?'<br><br>Sube la primera con el botón <strong>"+ Subir nuevo"</strong>.':'<br><br>Pídele al administrador que suba plantillas.'}
+    </div>`;
+    return;
+  }
+  list.innerHTML = tpls.map(t=>{
+    const isPdf = (t.fileType||'').toLowerCase().includes('pdf');
+    const icon = isPdf?'📄':'📝';
+    return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:start;gap:10px;margin-bottom:8px;">
+        <div style="min-width:0;flex:1;">
+          <div style="font-weight:800;font-size:14px;color:#0f172a;">${icon} ${escH(t.name||'Sin nombre')}</div>
+          ${t.tipo?`<div style="font-size:11px;color:#7c3aed;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:2px;">${escH(t.tipo)}</div>`:''}
+          ${t.description?`<div style="font-size:11px;color:#64748b;margin-top:3px;">${escH(t.description)}</div>`:''}
+          <div style="font-size:10px;color:#94a3b8;margin-top:3px;">${escH(t.fileName||'')} · subido por ${escH(t.createdBy||'—')}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
+          <a href="${t.fileUrl}" target="_blank" style="background:#f1f5f9;color:#0f172a;text-decoration:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;text-align:center;">👁 Ver</a>
+          ${isAdmin()?`<button type="button" onclick="csDeleteTemplate('${t.id}')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;">🗑</button>`:''}
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button type="button" onclick="csSendConsent('${t.id}','whatsapp')" style="flex:1;min-width:120px;background:#25d366;color:#fff;border:none;border-radius:7px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;">💚 WhatsApp</button>
+        <button type="button" onclick="csSendConsent('${t.id}','email')" style="flex:1;min-width:120px;background:#6366f1;color:#fff;border:none;border-radius:7px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;">📧 Email</button>
+        <button type="button" onclick="csCopyLink('${t.id}')" style="flex:1;min-width:100px;background:#f1f5f9;color:#0f172a;border:1px solid #cbd5e1;border-radius:7px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;">🔗 Copiar link</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function csRenderHistory(){
+  const wrap = document.getElementById('csHistoryList');
+  if(!csState.patientId){ wrap.innerHTML=''; return; }
+  const p = patientsDB[csState.patientId];
+  const reqs = getPatientConsentRequests(p);
+  if(!reqs.length){
+    wrap.innerHTML = `<div style="background:#f8fafc;border:1px dashed #cbd5e1;border-radius:9px;padding:20px;text-align:center;color:#64748b;font-size:13px;">Aún no se ha enviado ningún consentimiento a este paciente.</div>`;
+    return;
+  }
+  wrap.innerHTML = reqs.map(r=>{
+    const sentDate = r.sentAt ? new Date(r.sentAt).toLocaleString('es-CL',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+    const respDate = r.respondedAt ? new Date(r.respondedAt).toLocaleString('es-CL',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+    let statusBadge;
+    if(r.responseStatus==='accepted'){
+      statusBadge = `<span style="background:#dcfce7;color:#15803d;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:800;">✅ AUTORIZÓ</span>`;
+    } else if(r.responseStatus==='rejected'){
+      statusBadge = `<span style="background:#fee2e2;color:#b91c1c;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:800;">❌ NO AUTORIZÓ</span>`;
+    } else {
+      statusBadge = `<span style="background:#fef9c3;color:#92400e;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:800;">⏳ PENDIENTE</span>`;
+    }
+    const link = csBuildPublicLink(r.id);
+    return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:start;gap:10px;margin-bottom:6px;">
+        <div style="min-width:0;flex:1;">
+          <div style="font-weight:700;font-size:13px;color:#0f172a;">${escH(r.templateName||'Consentimiento')}</div>
+          <div style="font-size:11px;color:#64748b;margin-top:2px;">Enviado por ${escH(r.sentVia||'—')} · ${sentDate} por ${escH(r.sentBy||'—')}</div>
+          ${respDate?`<div style="font-size:11px;color:#64748b;">Respondió: ${respDate}</div>`:''}
+          ${r.responseUserAgent?`<div style="font-size:10px;color:#94a3b8;">Dispositivo: ${escH(r.responseUserAgent.slice(0,80))}</div>`:''}
+        </div>
+        ${statusBadge}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+        <a href="${link}" target="_blank" style="flex:1;min-width:120px;background:#f1f5f9;color:#0f172a;text-decoration:none;border-radius:6px;padding:6px;font-size:11px;font-weight:700;text-align:center;">🔗 Ver formulario</a>
+        ${r.responseStatus==='pending'?`
+          <button type="button" onclick="csResend('${r.id}','whatsapp')" style="flex:1;min-width:100px;background:#25d366;color:#fff;border:none;border-radius:6px;padding:6px;font-size:11px;font-weight:700;cursor:pointer;">↻ WA</button>
+          <button type="button" onclick="csResend('${r.id}','email')" style="flex:1;min-width:100px;background:#6366f1;color:#fff;border:none;border-radius:6px;padding:6px;font-size:11px;font-weight:700;cursor:pointer;">↻ Email</button>
+        `:''}
+        ${isAdmin()?`<button type="button" onclick="csDeleteRequest('${r.id}')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;">🗑</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Upload template (admin) ──
+function csOpenUpload(){
+  if(!isAdmin()){ alert('Solo el administrador puede subir plantillas.'); return; }
+  ['csUpName','csUpType','csUpDesc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('csUpFile').value='';
+  document.getElementById('csUpStatus').style.display='none';
+  document.getElementById('consentUploadModal').classList.remove('hidden');
+}
+function csCloseUpload(){
+  document.getElementById('consentUploadModal').classList.add('hidden');
+}
+
+function csSetUpStatus(msg, kind){
+  const el = document.getElementById('csUpStatus');
+  if(!msg){ el.style.display='none'; return; }
+  const palette = {info:['#dbeafe','#1d4ed8'], ok:['#dcfce7','#15803d'], err:['#fee2e2','#b91c1c']};
+  const [bg,fg] = palette[kind||'info'];
+  el.style.display='block'; el.style.background=bg; el.style.color=fg;
+  el.textContent = msg;
+}
+
+async function csSaveTemplate(){
+  if(!isAdmin()){ alert('Solo el administrador.'); return; }
+  const name = document.getElementById('csUpName').value.trim();
+  const tipo = document.getElementById('csUpType').value.trim();
+  const desc = document.getElementById('csUpDesc').value.trim();
+  const fileInp = document.getElementById('csUpFile');
+  const file = fileInp.files && fileInp.files[0];
+  if(!name){ alert('Ingresa un nombre para la plantilla.'); return; }
+  if(!file){ alert('Selecciona un archivo PDF o Word.'); return; }
+  if(file.size > 10*1024*1024){ alert('El archivo excede 10 MB.'); return; }
+  const ext = (file.name.match(/\.(pdf|docx?|)$/i)||['',''])[1].toLowerCase();
+  if(!['pdf','doc','docx'].includes(ext)){ alert('Solo PDF o Word.'); return; }
+  if(!fbStorage){ alert('Firebase Storage no está configurado.'); return; }
+
+  const btn = document.getElementById('csUpSaveBtn');
+  btn.disabled=true; btn.textContent='Subiendo...';
+
+  const id = 'cst_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
+  try{
+    csSetUpStatus('☁️ Subiendo archivo...', 'info');
+    await ensureAuth();
+    const path = `consentTemplates/${id}.${ext}`;
+    const ref = fbStorage.ref().child(path);
+    const snap = await ref.put(file, { contentType: file.type || (ext==='pdf'?'application/pdf':'application/msword') });
+    const url = await snap.ref.getDownloadURL();
+
+    const tpl = {
+      id,
+      name, tipo, description: desc,
+      fileName: file.name,
+      fileType: ext==='pdf'?'pdf':'word',
+      fileUrl: url,
+      storagePath: path,
+      createdAt: new Date().toISOString(),
+      createdBy: currentSession?.name || 'admin'
+    };
+    consentTemplatesDB[id] = tpl;
+    csSetUpStatus('💾 Guardando plantilla...', 'info');
+    await db.collection('consentTemplates').doc(id).set(tpl);
+    csSetUpStatus('✅ Plantilla subida correctamente.', 'ok');
+    setTimeout(()=>csCloseUpload(), 800);
+    csRenderTemplates();
+  }catch(e){
+    console.error(e);
+    csSetUpStatus('❌ Error: '+e.message, 'err');
+  }
+  btn.disabled=false; btn.textContent='Subir plantilla';
+}
+
+async function csDeleteTemplate(id){
+  if(!isAdmin()){ alert('Solo el administrador.'); return; }
+  const t = consentTemplatesDB[id]; if(!t) return;
+  if(!confirm(`¿Eliminar la plantilla "${t.name}"?\nLos consentimientos ya enviados seguirán funcionando.`)) return;
+  try{
+    await ensureAuth();
+    if(t.storagePath && fbStorage){
+      try{ await fbStorage.ref().child(t.storagePath).delete(); }catch(e){ console.warn('Storage delete:',e); }
+    }
+    await db.collection('consentTemplates').doc(id).delete();
+    delete consentTemplatesDB[id];
+    csRenderTemplates();
+  }catch(e){ alert('Error: '+e.message); }
+}
+
+// ── Send consent ──
+function csBuildPublicLink(reqId){
+  const base = location.origin;
+  return `${base}/consent.html?id=${reqId}`;
+}
+
+async function csSendConsent(templateId, channel){
+  const tpl = consentTemplatesDB[templateId];
+  if(!tpl){ alert('Plantilla no encontrada.'); return; }
+  if(!csState.patientId){ alert('Selecciona un paciente.'); return; }
+  const p = patientsDB[csState.patientId];
+  if(!p){ alert('Paciente no encontrado.'); return; }
+
+  if(channel==='email' && !p.email){ alert('El paciente no tiene email registrado.'); return; }
+  if(channel==='whatsapp' && !p.tel1){ alert('El paciente no tiene WhatsApp/teléfono registrado.'); return; }
+
+  const mobile = isMobileDevice();
+  let popupWin = null;
+  if(!mobile) popupWin = window.open('about:blank', '_blank');
+
+  const id = 'cr_'+Date.now()+'_'+Math.random().toString(36).slice(2,10);
+  const req = {
+    id,
+    templateId, templateName: tpl.name, templateUrl: tpl.fileUrl,
+    templateFileType: tpl.fileType, templateFileName: tpl.fileName,
+    patientId: p.id, patientName: patientFullName(p),
+    patientEmail: p.email||'', patientPhone: p.tel1||'',
+    sentVia: channel, sentAt: new Date().toISOString(),
+    sentBy: currentSession?.name || 'admin',
+    responseStatus: 'pending'
+  };
+  consentRequestsDB[id] = req;
+
+  try{
+    await ensureAuth();
+    await db.collection('consentRequests').doc(id).set(req);
+  }catch(e){
+    console.warn('Save consent request:', e);
+    alert('No se pudo guardar el consentimiento en la nube. Aún así puedes enviar el link manualmente.');
+  }
+
+  const link = csBuildPublicLink(id);
+  const msg = csBuildMessage(req, link);
+
+  if(channel==='email'){
+    const subj = `Consentimiento informado — ${tpl.name}`;
+    const targetURL = buildEmailURL(p.email, subj, msg);
+    if(mobile) location.href = targetURL;
+    else if(popupWin && !popupWin.closed) popupWin.location.href = targetURL;
+    else window.open(targetURL,'_blank');
+  } else {
+    const phone = (p.tel1||'').replace(/\D/g,'');
+    const targetURL = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+    if(mobile) location.href = targetURL;
+    else if(popupWin && !popupWin.closed) popupWin.location.href = targetURL;
+    else window.open(targetURL,'_blank');
+  }
+  csSwitchTab('history');
+}
+
+async function csResend(reqId, channel){
+  const r = consentRequestsDB[reqId]; if(!r) return;
+  const p = patientsDB[r.patientId];
+  if(!p){ alert('El paciente fue eliminado. No puedes reenviar.'); return; }
+  if(channel==='email' && !p.email){ alert('Sin email registrado.'); return; }
+  if(channel==='whatsapp' && !p.tel1){ alert('Sin teléfono registrado.'); return; }
+
+  const link = csBuildPublicLink(reqId);
+  const msg = csBuildMessage(r, link);
+  const mobile = isMobileDevice();
+  if(channel==='email'){
+    const subj = `Recordatorio: Consentimiento informado — ${r.templateName}`;
+    const targetURL = buildEmailURL(p.email, subj, msg);
+    if(mobile) location.href = targetURL;
+    else window.open(targetURL,'_blank');
+  } else {
+    const phone = (p.tel1||'').replace(/\D/g,'');
+    const targetURL = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+    if(mobile) location.href = targetURL;
+    else window.open(targetURL,'_blank');
+  }
+}
+
+function csBuildMessage(req, link){
+  const lines = [
+    `Hola ${req.patientName},`,
+    ``,
+    `Daniel Marrero Cosmetólogo te ha enviado el siguiente consentimiento informado:`,
+    `📄 ${req.templateName}`,
+    ``,
+    `Por favor abre el siguiente link, lee el documento y responde si AUTORIZAS o NO AUTORIZAS la realización del procedimiento:`,
+    ``,
+    `👉 ${link}`,
+    ``,
+    `Tu respuesta queda registrada automáticamente. ¡Gracias!`
+  ];
+  return lines.join('\n');
+}
+
+async function csCopyLink(templateId){
+  // Quick generate-and-copy: creates a request and copies link
+  const tpl = consentTemplatesDB[templateId];
+  if(!tpl){ alert('Plantilla no encontrada.'); return; }
+  if(!csState.patientId){ alert('Selecciona un paciente.'); return; }
+  const p = patientsDB[csState.patientId];
+  const id = 'cr_'+Date.now()+'_'+Math.random().toString(36).slice(2,10);
+  const req = {
+    id,
+    templateId, templateName: tpl.name, templateUrl: tpl.fileUrl,
+    templateFileType: tpl.fileType, templateFileName: tpl.fileName,
+    patientId: p.id, patientName: patientFullName(p),
+    patientEmail: p.email||'', patientPhone: p.tel1||'',
+    sentVia: 'link', sentAt: new Date().toISOString(),
+    sentBy: currentSession?.name || 'admin',
+    responseStatus: 'pending'
+  };
+  consentRequestsDB[id] = req;
+  try{ await ensureAuth(); await db.collection('consentRequests').doc(id).set(req); }
+  catch(e){ console.warn('Save consent:', e); }
+  const link = csBuildPublicLink(id);
+  try{
+    await navigator.clipboard.writeText(link);
+    alert('Link copiado al portapapeles:\n'+link);
+  }catch(e){
+    prompt('Copia este link:', link);
+  }
+  csSwitchTab('history');
+}
+
+async function csDeleteRequest(id){
+  if(!isAdmin()) return;
+  if(!confirm('¿Eliminar este registro de consentimiento? La respuesta del paciente quedará perdida.')) return;
+  try{
+    await ensureAuth();
+    await db.collection('consentRequests').doc(id).delete();
+    delete consentRequestsDB[id];
+    csRenderHistory();
+  }catch(e){ alert('Error: '+e.message); }
 }
 
 async function vchSavePayment(){
