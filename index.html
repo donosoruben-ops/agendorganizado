@@ -1269,6 +1269,11 @@ function isAdmin(){ return currentSession && currentSession.role === 'admin'; }
 function checkSession(){
   currentSession = getSession();
   if(currentSession){
+    // Migra sesiones admin antiguas con nombre Daniel Marrero al admin real
+    if(currentSession.role === 'admin' && currentSession.name === 'Daniel Marrero'){
+      currentSession.name = 'Rubén Donoso';
+      setSession(currentSession);
+    }
     showApp();
     renderCalendar();
     renderMonthlyCalendar();
@@ -1323,7 +1328,7 @@ function doAdminLogin(){
   const pass = document.getElementById('loginAdminPass').value;
   const err  = document.getElementById('adminErr');
   if(user === authCfg.adminUser && pass === authCfg.adminPass){
-    setSession({role:'admin', name:'Daniel Marrero'});
+    setSession({role:'admin', name:'Rubén Donoso'});
     showApp();
     renderCalendar();
     renderMonthlyCalendar();
@@ -3611,7 +3616,7 @@ function presGetData(){
     obs: document.getElementById('presObs').value.trim(),
     items: presState.items, subtotal: sub, descuento: desc, total: sub-desc,
     fecha: today, validez, validoHasta: until,
-    emittedBy: currentSession ? currentSession.name : 'Daniel Marrero',
+    emittedBy: currentSession ? currentSession.name : 'Rubén Donoso',
     emitterContact: getEmitterContact()
   };
 }
