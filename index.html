@@ -89,13 +89,27 @@
     .fi{width:100%;border:1px solid #cbd5e1;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;transition:border .15s;}
     .fi:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,86,176,.12);}
     .fi-sm{padding:5px 8px;font-size:12px;}
-    .status-pills{display:flex;gap:6px;}
-    .st-pill{flex:1;border:2px solid #e2e8f0;border-radius:8px;padding:6px 4px;text-align:center;font-size:11px;font-weight:700;cursor:pointer;transition:all .12s;}
+    .status-pills{display:flex;gap:6px;flex-wrap:wrap;}
+    .st-pill{flex:1 1 calc(20% - 6px);min-width:0;border:2px solid #e2e8f0;border-radius:8px;padding:6px 4px;text-align:center;font-size:11px;font-weight:700;cursor:pointer;transition:all .12s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .st-pill:hover{border-color:#94a3b8;}
     .st-pill.active-pending   {background:#eff6ff;border-color:#3b82f6;color:#1e3a8a;}
     .st-pill.active-confirmed {background:#dcfce7;border-color:#16a34a;color:#14532d;}
     .st-pill.active-cancelled {background:#fee2e2;border-color:#dc2626;color:#7f1d1d;}
     .st-pill.active-rescheduled{background:#ffedd5;border-color:#ea580c;color:#7c2d12;}
+    .st-pill.pill-error{color:#7f1d1d;border-color:#fca5a5;background:#fff5f5;}
+    .st-pill.pill-error:hover{background:#fee2e2;border-color:#dc2626;}
+    /* Evaluation toggle */
+    .eval-toggle{display:flex;align-items:center;gap:8px;background:#fff7ed;border:2px solid #fdba74;border-radius:9px;padding:9px 12px;cursor:pointer;transition:all .12s;margin-bottom:8px;}
+    .eval-toggle:hover{background:#ffedd5;border-color:#fb923c;}
+    .eval-toggle.active{background:#ea580c;border-color:#c2410c;color:#fff;}
+    .eval-toggle input[type=checkbox]{width:18px;height:18px;accent-color:#ea580c;cursor:pointer;flex-shrink:0;}
+    /* Reagendar banner */
+    #reagendarBanner{position:fixed;top:54px;left:0;right:0;background:linear-gradient(135deg,#ea580c,#c2410c);color:#fff;padding:10px 14px;display:flex;align-items:center;gap:10px;z-index:55;box-shadow:0 4px 14px rgba(0,0,0,.2);font-size:13px;font-weight:700;}
+    #reagendarBanner button{background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:7px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;}
+    #reagendarBanner button:hover{background:rgba(255,255,255,.32);}
+    @media(max-width:640px){
+      #reagendarBanner{flex-wrap:wrap;font-size:12px;padding:8px 10px;}
+    }
     .modal-ft{padding:12px 18px;border-top:1px solid #f1f5f9;display:flex;align-items:center;gap:8px;}
     .btn-save{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:8px 20px;font-weight:700;font-size:13px;cursor:pointer;flex:1;}
     .btn-save:hover{background:var(--blue2);}
@@ -297,6 +311,16 @@
   Para sincronización multi-dispositivo: completa FIREBASE_CONFIG en el código.
 </div>
 
+<!-- REAGENDAR BANNER -->
+<div id="reagendarBanner" class="hidden" style="display:none;">
+  <span style="font-size:18px;">🔄</span>
+  <div style="flex:1;min-width:0;">
+    <div id="reagendarBannerText">Reagendando cita</div>
+    <div style="font-size:11px;font-weight:600;opacity:.85;">Haz click en el horario nuevo del calendario.</div>
+  </div>
+  <button type="button" onclick="cancelReagendar()">✕ Cancelar</button>
+</div>
+
 <!-- TOP NAV -->
 <nav id="topNav">
   <div id="navBrand">
@@ -383,6 +407,7 @@
           <div class="st-pill" data-st="confirmed"   onclick="selectStatus('confirmed')">✅ Confirmado</div>
           <div class="st-pill" data-st="cancelled"   onclick="selectStatus('cancelled')">❌ Cancelado</div>
           <div class="st-pill" data-st="rescheduled" onclick="selectStatus('rescheduled')">🔄 Reprogramado</div>
+          <div class="st-pill pill-error" onclick="apptDeleteByError()" title="Eliminar cita por error">🚫 Error</div>
         </div>
       </div>
       <div class="field-group">
@@ -414,6 +439,14 @@
         <label>Monto ($)</label>
         <input id="apptAmount" class="fi" type="number" min="0" placeholder="0" oninput="updateSplitPreview()">
       </div>
+      <!-- Evaluation toggle (only shown when session plan exists) -->
+      <label id="evalToggleWrap" class="eval-toggle hidden" for="apptIsEvaluation" style="display:none;">
+        <input type="checkbox" id="apptIsEvaluation" onchange="toggleEvaluation(this.checked)">
+        <div style="flex:1;">
+          <div style="font-size:12px;font-weight:800;line-height:1.2;">📋 Solo evaluación inicial</div>
+          <div style="font-size:11px;opacity:.85;margin-top:1px;line-height:1.3;">Marca esto si esta cita es solo de diagnóstico/consulta. Las sesiones del plan quedan todas pendientes para el futuro.</div>
+        </div>
+      </label>
       <!-- Session tracker (depilación / facial) -->
       <div id="sessionTracker" class="hidden"></div>
       <div id="splitPreview" class="hidden" style="background:#f8fafc;border-radius:8px;padding:10px;font-size:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;">
@@ -1750,8 +1783,21 @@ let acResults   = [];
 function openApptModal(dateKey, hour, box){
   box = box||1;
   const k = slotKey(hour,box);
+  const existingSlot=(state.appointments[dateKey]||{})[k]||{};
+  const isEmptySlot = !(existingSlot.patient||'').trim();
+
+  // Reagendar mode: if active and target slot is empty, drop new appt with reagendar data
+  if(isReagendarMode()){
+    if(isEmptySlot){
+      if(applyReagendarToSlot(dateKey, hour, box)) return;
+    } else {
+      alert(`Ese horario ya está ocupado por "${existingSlot.patient}".\nSelecciona un horario libre o cancela el reagendamiento desde el banner naranja.`);
+      return;
+    }
+  }
+
   apptContext={dateKey,hour,box,key:k};
-  const slot=(state.appointments[dateKey]||{})[k]||{};
+  const slot=existingSlot;
   const d=parseDateKey(dateKey), isNew=!(slot.patient||'').trim();
   const bname=boxesConfig[box-1]||'Box '+box;
 
@@ -1769,12 +1815,17 @@ function openApptModal(dateKey, hour, box){
   document.getElementById('apptDelBtn').classList.toggle('hidden', isNew || !isAdmin());
 
   // Restore session data
-  currentSessionData = slot.sessions || null;
+  currentSessionData = slot.sessions ? JSON.parse(JSON.stringify(slot.sessions)) : null;
   if(!currentSessionData && !isNew){
     // check if the type label implies sessions
     const n = parseSessionCount(slot.attentionType||'');
     if(n > 1) currentSessionData = initSessionData(n, null, dateKey);
   }
+  // If marked as evaluation, ensure all sessions are pending (don't count this appt as session 1)
+  if(currentSessionData && slot.isEvaluation){
+    currentSessionData.items.forEach(it=>{ it.status='pending'; });
+  }
+  refreshEvalToggle(slot, !!(currentSessionData && currentSessionData.total>1));
   renderSessionTracker();
 
   selectStatus(slot.status||'pending');
@@ -1794,11 +1845,183 @@ function closeApptModal(){
 }
 
 function selectStatus(st){
+  // Special flow: clicking "rescheduled" triggers reagendar flow
+  if(st==='rescheduled' && apptContext){
+    const slot = (state.appointments[apptContext.dateKey]||{})[apptContext.key]||{};
+    const isExisting = (slot.patient||'').trim().length>0;
+    if(isExisting){
+      startReagendarFlow();
+      return;
+    }
+  }
   apptStatus=st;
   document.querySelectorAll('.st-pill').forEach(p=>{
     const s=p.dataset.st;
+    if(!s) return; // skip pill-error
     p.className='st-pill'+(s===st?' '+(STATUS_CFG[st]?.pill||''):'');
   });
+}
+
+// ════ REAGENDAR FLOW ════
+let reagendarContext = null; // { patient, type, origin, amount, sessions, originalDateKey, originalHour, originalBox, originalKey }
+
+function startReagendarFlow(){
+  if(!apptContext) return;
+  const {dateKey, key, hour, box} = apptContext;
+  const slot = (state.appointments[dateKey]||{})[key]||{};
+  const patient = (document.getElementById('apptPatient').value||slot.patient||'').trim();
+  if(!patient){ alert('Sin paciente, no se puede reagendar.'); return; }
+  const dateLabel = parseDateKey(dateKey).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  if(!confirm(`Reagendar la cita de "${patient}" del ${dateLabel} ${pad(hour)}:00?\n\nLa cita original quedará marcada como "Reprogramado — no vino" y se abrirá la agenda para que selecciones el nuevo horario.`)) return;
+
+  // Capture data from form (may have unsaved edits)
+  const noteOriginal = document.getElementById('apptNotes').value.trim();
+  const reagendarNote = `🔄 No vino ${patient} — reprogramado el ${dateLabel} ${pad(hour)}:00`;
+  const newNotes = noteOriginal ? `${reagendarNote}\n${noteOriginal}` : reagendarNote;
+
+  // Save current slot as rescheduled
+  apptStatus = 'rescheduled';
+  const newBox = parseInt(document.getElementById('apptBox').value)||box||1;
+  const newKey = slotKey(hour, newBox);
+  const existingSlot = (state.appointments[dateKey]||{})[key]||{};
+  const updatedSlot = {
+    patient,
+    attentionType: document.getElementById('apptType').value.trim(),
+    origin:        document.getElementById('apptOrigin').value,
+    amount:        Number(document.getElementById('apptAmount').value)||'',
+    status:        'rescheduled',
+    notes:         newNotes,
+    box:           newBox,
+    sessions:      currentSessionData || existingSlot.sessions || undefined,
+    photos:        existingSlot.photos || [],
+    isEvaluation:  document.getElementById('apptIsEvaluation').checked || existingSlot.isEvaluation || false,
+    rescheduledFrom: { dateKey, hour, box: newBox }
+  };
+  if(newKey!==key) delete getDayData(dateKey)[key];
+  getDayData(dateKey)[newKey] = updatedSlot;
+  scheduleWrite(dateKey);
+
+  // Save reagendar context
+  reagendarContext = {
+    patient,
+    type:   updatedSlot.attentionType,
+    origin: updatedSlot.origin,
+    amount: updatedSlot.amount,
+    sessions: updatedSlot.sessions,
+    isEvaluation: updatedSlot.isEvaluation,
+    originalDateKey: dateKey,
+    originalHour:    hour,
+    originalBox:     newBox,
+    originalKey:     newKey
+  };
+
+  closeApptModal();
+  renderCalendar();
+  showReagendarBanner();
+}
+
+function showReagendarBanner(){
+  if(!reagendarContext) return;
+  const banner = document.getElementById('reagendarBanner');
+  const text = document.getElementById('reagendarBannerText');
+  text.textContent = `🔄 Reagendando: ${reagendarContext.patient}${reagendarContext.type?' · '+reagendarContext.type:''}`;
+  banner.classList.remove('hidden');
+  banner.style.display='flex';
+  // Force agenda view
+  if(currentView!=='agenda') showView('agenda');
+}
+
+function cancelReagendar(){
+  reagendarContext = null;
+  const banner = document.getElementById('reagendarBanner');
+  banner.classList.add('hidden');
+  banner.style.display='none';
+}
+
+function isReagendarMode(){ return !!reagendarContext; }
+
+function applyReagendarToSlot(dateKey, hour, box){
+  if(!reagendarContext) return false;
+  const ctx = reagendarContext;
+  const k = slotKey(hour, box);
+  // Don't allow placing on the same original slot
+  if(dateKey===ctx.originalDateKey && k===ctx.originalKey){
+    alert('Selecciona un horario distinto al original.');
+    return false;
+  }
+  const baseType = (ctx.type||'').replace(/^🔄\s*RE\s*AGENDADA\s*[—\-]\s*/i,'').trim();
+  const newType = baseType ? `🔄 RE AGENDADA — ${baseType}` : '🔄 RE AGENDADA';
+  const origDateLabel = parseDateKey(ctx.originalDateKey).toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'});
+  const note = `🔄 Cita reagendada desde ${origDateLabel} ${pad(ctx.originalHour)}:00`;
+
+  if(!state.appointments[dateKey]) state.appointments[dateKey]={};
+  // Reset isEvaluation by default for the rescheduled date — it's a future session, not an evaluation again
+  state.appointments[dateKey][k] = {
+    patient: ctx.patient,
+    attentionType: newType,
+    origin: ctx.origin,
+    amount: ctx.amount,
+    status: 'pending',
+    notes: note,
+    box,
+    sessions: ctx.sessions ? JSON.parse(JSON.stringify(ctx.sessions)) : undefined,
+    photos: [],
+    isEvaluation: !!ctx.isEvaluation,
+    rescheduledFromOriginal: { dateKey: ctx.originalDateKey, hour: ctx.originalHour, box: ctx.originalBox }
+  };
+  scheduleWrite(dateKey);
+  cancelReagendar();
+  renderCalendar();
+  // Open the new appt modal so admin can confirm/edit
+  setTimeout(()=>openApptModal(dateKey, hour, box), 80);
+  return true;
+}
+
+// ════ EVALUATION TOGGLE ════
+function toggleEvaluation(checked){
+  const wrap = document.getElementById('evalToggleWrap');
+  wrap.classList.toggle('active', checked);
+  // Adjust currentSessionData: if evaluation, mark all sessions as pending
+  if(!currentSessionData) return;
+  if(checked){
+    currentSessionData.items.forEach(it=>{ it.status='pending'; });
+  } else {
+    // Restore session 1 as done (current appointment is the first session)
+    if(currentSessionData.items[0]) currentSessionData.items[0].status='done';
+  }
+  renderSessionTracker();
+}
+
+function refreshEvalToggle(slot, hasSessions){
+  const wrap = document.getElementById('evalToggleWrap');
+  const cb = document.getElementById('apptIsEvaluation');
+  if(hasSessions){
+    wrap.classList.remove('hidden');
+    wrap.style.display='flex';
+    cb.checked = !!(slot && slot.isEvaluation);
+    wrap.classList.toggle('active', cb.checked);
+  } else {
+    wrap.classList.add('hidden');
+    wrap.style.display='none';
+    cb.checked = false;
+    wrap.classList.remove('active');
+  }
+}
+
+// ════ DELETE BY ERROR ════
+function apptDeleteByError(){
+  if(!apptContext) return;
+  const {dateKey, key} = apptContext;
+  const slot = (state.appointments[dateKey]||{})[key]||{};
+  const patient = (slot.patient||document.getElementById('apptPatient').value||'').trim();
+  const msg = patient
+    ? `¿Eliminar por ERROR la cita de "${patient}"?\n\nEsto borra completamente la cita (no queda registro). Úsalo solo si fue creada por error.`
+    : `¿Eliminar este horario por error?`;
+  if(!confirm(msg)) return;
+  delete getDayData(dateKey)[key];
+  scheduleWrite(dateKey);
+  closeApptModal();
+  renderCalendar();
 }
 
 function updateSplitPreview(){
@@ -1828,7 +2051,8 @@ function saveAppt(){
     notes:         document.getElementById('apptNotes').value.trim(),
     box:           newBox,
     sessions:      currentSessionData || undefined,
-    photos:        existingSlot.photos || []
+    photos:        existingSlot.photos || [],
+    isEvaluation:  document.getElementById('apptIsEvaluation').checked || false
   };
   // If box changed, remove old key
   if(newKey!==key) delete getDayData(dateKey)[key];
