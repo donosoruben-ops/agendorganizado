@@ -48,6 +48,18 @@
     #navName{font-weight:800;font-size:15px;letter-spacing:.3px;white-space:nowrap;}
     .nav-icon-btn{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:6px;padding:5px 9px;cursor:pointer;font-size:15px;line-height:1;transition:background .12s;}
     .nav-icon-btn:hover{background:rgba(255,255,255,.28);}
+    /* AAG nav button */
+    .nav-aag-btn{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 10px;cursor:pointer;border-radius:6px;transition:background .12s;font-size:11px;font-weight:700;color:rgba(255,255,255,.9);user-select:none;margin-right:4px;}
+    .nav-aag-btn:hover{background:rgba(255,255,255,.12);}
+    .nav-aag-btn.inactive{opacity:0.7;}
+    .nav-aag-btn img{width:26px;height:26px;object-fit:contain;background:#fff;border-radius:5px;padding:1px;display:block;}
+    .nav-aag-badge{position:absolute;top:-3px;right:-3px;width:18px;height:18px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1;box-shadow:0 1px 3px rgba(0,0,0,.4);font-weight:800;}
+    .nav-aag-badge.active{color:#16a34a;}
+    .nav-aag-badge.inactive{color:#dc2626;}
+    .aag-toggle{display:inline-flex;align-items:center;gap:5px;background:#f1f5f9;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid #e2e8f0;}
+    .aag-toggle input{margin:0;cursor:pointer;}
+    .aag-toggle .aag-icon-on{color:#16a34a;font-weight:800;}
+    .aag-toggle .aag-icon-off{color:#dc2626;font-weight:800;}
 
     /* ── TOOLBAR ── */
     #toolbar{height:46px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;padding:0 14px;gap:8px;flex-shrink:0;}
@@ -362,6 +374,11 @@
   <div id="navBrand">
     <img id="navLogo" src="" alt="logo">
     <span id="navName">💆 Daniel Marrero</span>
+  </div>
+  <div class="nav-aag-btn" id="aagNavBtn" onclick="openAAG()" title="AAG - Asistente Apoyo Gestión">
+    <img src="aag-logo.png" alt="AAG">
+    <span class="nav-aag-badge active" id="aagBadge">✓</span>
+    <span style="margin-top:1px;">AAG</span>
   </div>
   <div class="nav-tab active" id="tabAgenda" onclick="showView('agenda')">
     <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -1277,6 +1294,7 @@ function showApp(){
   document.getElementById('loginScreen').style.display = 'none';
   applyRoleUI();
   updateUserBadge();
+  updateAagBadge();
 }
 
 function applyRoleUI(){
@@ -1404,15 +1422,20 @@ function addUser(){
   if(!name){ err.textContent='Ingresa un nombre.'; err.style.display='block'; return; }
   if(!/^\d{4}$/.test(pin)){ err.textContent='El PIN debe tener exactamente 4 dígitos.'; err.style.display='block'; return; }
   if(usersList.find(u=>u.name.toLowerCase()===name.toLowerCase())){ err.textContent='Ya existe un colaborador con ese nombre.'; err.style.display='block'; return; }
-  usersList.push({name, pin, email, whatsapp:wa});
+  usersList.push({name, pin, email, whatsapp:wa, aagActive:false});
   saveAuth();
   ['newUserName','newUserPin','newUserEmail','newUserWhatsapp'].forEach(id=>document.getElementById(id).value='');
   renderUsersList();
 }
 function updateUserContact(name, field, value){
   const u = usersList.find(x=>x.name===name); if(!u) return;
-  u[field] = value.trim();
+  u[field] = (typeof value === 'string') ? value.trim() : value;
   saveAuth();
+  if(field === 'aagActive') updateAagBadge();
+}
+function toggleUserAag(name, checked){
+  updateUserContact(name, 'aagActive', !!checked);
+  renderUsersList();
 }
 
 function removeUser(name){
@@ -1431,10 +1454,16 @@ function renderUsersList(){
   }
   container.innerHTML = usersList.map(u => {
     const nSafe = escH(u.name);
+    const aagOn = !!u.aagActive;
     return `
     <div class="user-row" style="flex-wrap:wrap;">
       <span class="user-row-name">👤 ${nSafe}</span>
       <span class="user-row-pin">PIN: ••••</span>
+      <label class="aag-toggle" title="Activa o desactiva AAG según su pago">
+        <input type="checkbox" ${aagOn?'checked':''} onchange="toggleUserAag('${nSafe}', this.checked)">
+        <span>AAG</span>
+        <span class="${aagOn?'aag-icon-on':'aag-icon-off'}">${aagOn?'✓':'✗'}</span>
+      </label>
       <button type="button" class="user-row-del" onclick="removeUser('${nSafe}')" title="Eliminar">🗑</button>
       <div style="flex-basis:100%;display:flex;gap:6px;margin-top:4px;">
         <input type="email" class="fi fi-sm" style="flex:2;font-size:11px;" placeholder="Email" value="${escH(u.email||'')}" onchange="updateUserContact('${nSafe}','email',this.value)">
@@ -1442,6 +1471,32 @@ function renderUsersList(){
       </div>
     </div>`;
   }).join('');
+}
+
+// ── AAG status & launcher ──
+function getCurrentUserAagStatus(){
+  if(!currentSession) return false;
+  if(currentSession.role === 'admin') return true; // admin siempre tiene AAG
+  const u = usersList.find(x=>x.name === currentSession.name);
+  return !!(u && u.aagActive);
+}
+function updateAagBadge(){
+  const badge = document.getElementById('aagBadge');
+  const btn = document.getElementById('aagNavBtn');
+  if(!badge || !btn) return;
+  const active = getCurrentUserAagStatus();
+  badge.textContent = active ? '✓' : '✗';
+  badge.classList.toggle('active', active);
+  badge.classList.toggle('inactive', !active);
+  btn.classList.toggle('inactive', !active);
+  btn.title = active ? 'AAG activo · Click para abrir' : 'AAG inactivo · Contacta al administrador';
+}
+function openAAG(){
+  if(!getCurrentUserAagStatus()){
+    alert('🔒 AAG no está activo en tu cuenta.\n\nContacta al administrador para suscribirte al servicio Asistente Apoyo Gestión.');
+    return;
+  }
+  window.open('/aag', '_blank');
 }
 
 // ════ CLINIC CONFIG ════
@@ -1686,6 +1741,8 @@ function listenConfig(){
         usersList=d.list;
         try{ localStorage.setItem(USERS_CFG_KEY,JSON.stringify(usersList)); }catch(e){}
         populateUserDropdown();
+        updateAagBadge();
+        renderUsersList();
       }
       if(doc.id==='clinic' && d){
         if(d.name!==undefined) clinicConfig.name=d.name;

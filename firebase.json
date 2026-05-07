@@ -18,6 +18,7 @@
     ],
     "rewrites": [
       { "source": "/consent", "destination": "/consent.html" },
+      { "source": "/aag", "destination": "/aag-en-construccion.html" },
       { "source": "**", "destination": "/index.html" }
     ]
   }

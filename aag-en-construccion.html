@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AAG · En construcción</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;min-height:100vh;background:linear-gradient(135deg,#1a4480 0%,#2d7a3e 100%);color:#fff;display:flex;align-items:center;justify-content:center;padding:20px}
+  .card{background:rgba(255,255,255,0.08);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:48px 36px;max-width:560px;width:100%;text-align:center;box-shadow:0 25px 60px rgba(0,0,0,0.35)}
+  .logo-wrap{background:white;border-radius:16px;padding:18px;display:inline-block;margin-bottom:24px;box-shadow:0 8px 24px rgba(0,0,0,0.2)}
+  .logo-wrap img{width:140px;height:auto;display:block}
+  h1{font-size:1.6rem;font-weight:800;margin-bottom:10px;letter-spacing:-0.01em}
+  .sub{font-size:0.95rem;opacity:0.85;margin-bottom:32px;font-weight:500}
+  .progress-wrap{margin:30px 0 20px}
+  .progress{height:6px;background:rgba(255,255,255,0.15);border-radius:99px;overflow:hidden;margin-bottom:8px}
+  .progress-bar{height:100%;width:35%;background:linear-gradient(90deg,#a7f3d0,#34d399);border-radius:99px;animation:pulse 2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:0.7}50%{opacity:1}}
+  .progress-label{font-size:0.8rem;opacity:0.7;font-weight:600}
+  .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:30px;text-align:left}
+  .feature{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:14px}
+  .feature-title{font-weight:700;font-size:0.88rem;margin-bottom:4px}
+  .feature-desc{font-size:0.8rem;opacity:0.75;line-height:1.4}
+  .footer{margin-top:36px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.12);font-size:0.78rem;opacity:0.7}
+  .back-btn{display:inline-block;margin-top:18px;padding:10px 20px;background:rgba(255,255,255,0.15);color:white;text-decoration:none;border-radius:8px;font-weight:600;font-size:0.88rem;border:1px solid rgba(255,255,255,0.2);transition:background 0.15s}
+  .back-btn:hover{background:rgba(255,255,255,0.25)}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo-wrap">
+      <img src="aag-logo.png" alt="AAG - Asistente Apoyo Gestión">
+    </div>
+    <h1>🚧 En construcción</h1>
+    <div class="sub">Tu asistente IA de confianza · Asistente Apoyo Gestión</div>
+
+    <div class="progress-wrap">
+      <div class="progress"><div class="progress-bar"></div></div>
+      <div class="progress-label">Estamos construyendo tu asistente</div>
+    </div>
+
+    <div class="features">
+      <div class="feature">
+        <div class="feature-title">📅 Gestión inteligente</div>
+        <div class="feature-desc">Asistencia automática para agendar, recordar y coordinar.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-title">💬 Atención por WhatsApp</div>
+        <div class="feature-desc">Responde a tus pacientes 24/7 con IA personalizada.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-title">📊 Análisis de datos</div>
+        <div class="feature-desc">Reportes y métricas para entender tu negocio.</div>
+      </div>
+    </div>
+
+    <a href="/" class="back-btn">← Volver a la app</a>
+
+    <div class="footer">© AAG · Asistente Apoyo Gestión</div>
+  </div>
+</body>
+</html>
