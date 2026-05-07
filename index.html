@@ -48,13 +48,13 @@
     #navName{font-weight:800;font-size:15px;letter-spacing:.3px;white-space:nowrap;}
     .nav-icon-btn{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:6px;padding:5px 9px;cursor:pointer;font-size:15px;line-height:1;transition:background .12s;}
     .nav-icon-btn:hover{background:rgba(255,255,255,.28);}
-    /* AAG nav button */
-    .nav-aag-btn{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 12px;cursor:pointer;border-radius:8px;transition:all .15s;font-size:11px;font-weight:800;color:#fff;user-select:none;margin-right:8px;background:linear-gradient(135deg,#16a34a,#15803d);box-shadow:0 2px 6px rgba(22,163,74,.45),0 0 0 2px rgba(255,255,255,.12) inset;border:1px solid rgba(255,255,255,.2);}
-    .nav-aag-btn:hover{background:linear-gradient(135deg,#22c55e,#16a34a);transform:translateY(-1px);box-shadow:0 4px 10px rgba(22,163,74,.55),0 0 0 2px rgba(255,255,255,.18) inset;}
-    .nav-aag-btn.inactive{background:linear-gradient(135deg,#64748b,#475569);box-shadow:0 2px 6px rgba(0,0,0,.25),0 0 0 2px rgba(255,255,255,.08) inset;opacity:0.92;}
-    .nav-aag-btn.inactive:hover{background:linear-gradient(135deg,#94a3b8,#64748b);}
-    .nav-aag-btn img{width:28px;height:28px;object-fit:contain;background:#fff;border-radius:5px;padding:1px;display:block;}
-    .nav-aag-badge{position:absolute;top:-5px;right:-5px;width:20px;height:20px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.5);font-weight:800;border:1.5px solid rgba(255,255,255,.9);}
+    /* AAG nav button — mismo tamaño que .nav-tab; fondo verde si activo, rojo si inactivo */
+    .nav-aag-btn{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 14px;cursor:pointer;border-radius:6px;transition:background .12s;font-size:11px;font-weight:700;color:#fff;user-select:none;background:#16a34a;}
+    .nav-aag-btn:hover{background:#15803d;}
+    .nav-aag-btn.inactive{background:#dc2626;}
+    .nav-aag-btn.inactive:hover{background:#b91c1c;}
+    .nav-aag-btn img{width:24px;height:24px;object-fit:contain;background:#fff;border-radius:4px;padding:1px;display:block;}
+    .nav-aag-badge{position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1;box-shadow:0 1px 3px rgba(0,0,0,.4);font-weight:800;}
     .nav-aag-badge.active{color:#16a34a;}
     .nav-aag-badge.inactive{color:#dc2626;}
     .aag-toggle{display:inline-flex;align-items:center;gap:5px;background:#f1f5f9;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid #e2e8f0;}
