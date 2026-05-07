@@ -129,8 +129,11 @@
     .ac-new{color:var(--blue);font-weight:600;font-size:12px;display:flex;align-items:center;gap:5px;}
 
     /* ── PATIENTS VIEW ── */
-    #viewPacientes .pat-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;cursor:pointer;transition:box-shadow .12s;}
-    #viewPacientes .pat-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);border-color:#93c5fd;}
+    #viewPacientes .pat-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;cursor:pointer;transition:box-shadow .12s, border-color .12s, transform .08s;}
+    #viewPacientes .pat-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);}
+    #viewPacientes .pat-card-registered:hover{border-color:#16a34a !important;}
+    #viewPacientes .pat-card-unregistered:hover{border-color:#dc2626 !important;}
+    #viewPacientes .pat-card:not(.pat-card-registered):not(.pat-card-unregistered):hover{border-color:#93c5fd;}
 
     /* ── FINANCES VIEW ── */
     .stat-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;}
@@ -1531,6 +1534,13 @@ function scheduleWrite(dateKey){
   clearTimeout(saveTimers[dateKey]);
   saveTimers[dateKey]=setTimeout(()=>{ persistDay(dateKey); }, 800);
 }
+
+// Refresh all views that depend on appointments data
+function refreshAfterScheduleChange(){
+  renderCalendar();
+  if(currentView==='pacientes') renderPacientes();
+  if(currentView==='finanzas') renderFinanzas();
+}
 async function persistDay(dateKey){
   const dayData=state.appointments[dateKey]||{};
   if(db){
@@ -1565,7 +1575,7 @@ async function startSync(){
       snap.forEach(doc=>{ state.appointments[doc.id]=normalizeDay(doc.data()); });
     }
     setSyncColor('green');
-    renderCalendar();
+    refreshAfterScheduleChange();
   }, ()=>setSyncColor('red'));
   startPatientsSync();
   startVoucherPaymentsSync();
@@ -1948,7 +1958,7 @@ function startReagendarFlow(){
   };
 
   closeApptModal();
-  renderCalendar();
+  refreshAfterScheduleChange();
   showReagendarBanner();
 }
 
@@ -2003,7 +2013,7 @@ function applyReagendarToSlot(dateKey, hour, box){
   };
   scheduleWrite(dateKey);
   cancelReagendar();
-  renderCalendar();
+  refreshAfterScheduleChange();
   // Open the new appt modal so admin can confirm/edit
   setTimeout(()=>openApptModal(dateKey, hour, box), 80);
   return true;
@@ -2067,7 +2077,7 @@ function apptDeleteByError(){
   delete getDayData(dateKey)[key];
   scheduleWrite(dateKey);
   closeApptModal();
-  renderCalendar();
+  refreshAfterScheduleChange();
 }
 
 function updateSplitPreview(){
@@ -2106,9 +2116,8 @@ function saveAppt(){
   state.writing=true;
   scheduleWrite(dateKey);
   setTimeout(()=>{ state.writing=false; },1200);
-  renderCalendar();
   closeApptModal();
-  if(currentView==='pacientes') renderPacientes();
+  refreshAfterScheduleChange();
 }
 
 function deleteAppt(){
@@ -2118,8 +2127,8 @@ function deleteAppt(){
   if(!confirm('¿Eliminar esta cita?')) return;
   delete getDayData(dateKey)[key];
   scheduleWrite(dateKey);
-  renderCalendar();
   closeApptModal();
+  refreshAfterScheduleChange();
 }
 
 // ════ TREATMENT PHOTOS (per appointment) ════
@@ -2639,40 +2648,51 @@ function renderPacientes(){
     html+='<div style="color:#94a3b8;font-size:13px;padding:12px;">No se encontraron pacientes.</div>';
   }
 
+  if(regList.length){
+    html+=`<div style="grid-column:1/-1;font-size:11px;font-weight:800;color:#15803d;text-transform:uppercase;letter-spacing:.4px;margin:8px 0 4px;padding:0 4px;">✅ Con ficha creada (${regList.length})</div>`;
+  }
   html+=regList.map(p=>{
     const visits=getPatientVisits(p);
     const last=visits[0];
     const lastStr=last?parseDateKey(last.dateKey).toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'}):'Sin citas';
     const total=visits.reduce((s,v)=>s+(Number(v.amount)||0),0);
-    return `<div class="pat-card" onclick="openPatProfile('${p.id}')">
+    return `<div class="pat-card pat-card-registered" onclick="openPatProfile('${p.id}')" style="background:#f0fdf4;border:1px solid #86efac;">
       <div style="display:flex;justify-content:space-between;align-items:start;gap:8px;">
-        <div style="min-width:0;">
+        <div style="min-width:0;flex:1;">
           <div style="font-weight:700;font-size:14px;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escH(patientFullName(p))}</div>
-          <div style="font-size:11px;color:#64748b;margin-top:2px;">Ficha #${p.ficha||'—'} ${p.categoria?'· <span style="background:#dbeafe;color:#1e40af;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;">'+escH(p.categoria)+'</span>':''}</div>
-          ${p.tel1?`<div style="font-size:11px;color:#64748b;margin-top:2px;">📞 ${escH(p.tel1)}</div>`:''}
-          <div style="font-size:11px;color:#94a3b8;margin-top:3px;">Última: ${lastStr}</div>
+          <div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;">
+            <span style="background:#16a34a;color:#fff;border-radius:10px;padding:2px 8px;font-size:10px;font-weight:800;letter-spacing:.3px;">✅ FICHA CREADA #${p.ficha||'—'}</span>
+            ${p.categoria?`<span style="background:#dbeafe;color:#1e40af;border-radius:10px;padding:2px 7px;font-size:10px;font-weight:700;">${escH(p.categoria)}</span>`:''}
+          </div>
+          ${p.tel1?`<div style="font-size:11px;color:#15803d;margin-top:4px;">📞 ${escH(p.tel1)}</div>`:''}
+          <div style="font-size:11px;color:#64748b;margin-top:3px;">Última: ${lastStr}</div>
         </div>
         <div style="text-align:right;flex-shrink:0;">
-          <div style="font-weight:800;font-size:16px;color:#1d4ed8;">${visits.length}</div>
+          <div style="font-weight:800;font-size:16px;color:#15803d;">${visits.length}</div>
           <div style="font-size:10px;color:#64748b;">cita(s)</div>
-          ${total?`<div style="font-size:11px;font-weight:700;color:#16a34a;margin-top:2px;">${money(total)}</div>`:''}
+          ${total?`<div style="font-size:11px;font-weight:700;color:#15803d;margin-top:2px;">${money(total)}</div>`:''}
         </div>
       </div>
     </div>`;
   }).join('');
 
   if(unregList.length){
-    html+=`<div style="grid-column:span 2;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.4px;margin:8px 0 4px;padding:0 4px;">Sin ficha registrada (${unregList.length})</div>`;
+    html+=`<div style="grid-column:1/-1;font-size:11px;font-weight:800;color:#b91c1c;text-transform:uppercase;letter-spacing:.4px;margin:14px 0 4px;padding:0 4px;">⏳ Ficha pendiente (${unregList.length}) — clic para crear</div>`;
     html+=unregList.map(p=>{
-      const lastD=parseDateKey(p.lastSlot.dateKey).toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'});
-      return `<div class="pat-card" onclick="openNewPatientModal('${escH(p.name)}')" style="border-style:dashed;opacity:.8;">
-        <div style="display:flex;justify-content:space-between;align-items:start;">
-          <div>
-            <div style="font-weight:700;font-size:13px;color:#0f172a;">${escH(p.name)}</div>
-            <div style="font-size:11px;color:#94a3b8;margin-top:2px;">Última: ${lastD} · Clic para crear ficha</div>
+      const lastD=p.lastSlot && p.lastSlot.dateKey
+        ? parseDateKey(p.lastSlot.dateKey).toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'})
+        : '—';
+      return `<div class="pat-card pat-card-unregistered" onclick="openNewPatientModal('${escH(p.name)}')" style="background:#fef2f2;border:1px solid #fecaca;">
+        <div style="display:flex;justify-content:space-between;align-items:start;gap:8px;">
+          <div style="min-width:0;flex:1;">
+            <div style="font-weight:700;font-size:13px;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escH(p.name)}</div>
+            <div style="margin-top:4px;">
+              <span style="background:#dc2626;color:#fff;border-radius:10px;padding:2px 8px;font-size:10px;font-weight:800;letter-spacing:.3px;">⏳ FICHA PENDIENTE</span>
+            </div>
+            <div style="font-size:11px;color:#b91c1c;margin-top:4px;">Última: ${lastD} · Clic para crear ficha</div>
           </div>
-          <div style="text-align:right;">
-            <div style="font-weight:800;font-size:15px;color:#94a3b8;">${p.count}</div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-weight:800;font-size:15px;color:#b91c1c;">${p.count}</div>
             <div style="font-size:10px;color:#94a3b8;">cita(s)</div>
           </div>
         </div>
