@@ -58,7 +58,40 @@
     #profBadge{font-size:12px;font-weight:700;color:var(--blue);background:var(--blue-lt);border:1px solid #bfdbfe;border-radius:6px;padding:4px 12px;}
 
     /* ── CALENDAR ── */
-    #calWrap{flex:1;overflow:auto;}
+    #calWrap{flex:0 1 auto;overflow:auto;max-height:62vh;}
+
+    /* ── MONTHLY CALENDAR ── */
+    #monthlyCalWrap{flex-shrink:0;border-top:2px solid #e2e8f0;background:#fff;padding:14px 16px;}
+    .mc-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+    .mc-title{font-size:15px;font-weight:800;color:#0f172a;text-transform:capitalize;flex:1;min-width:140px;}
+    .mc-totals{font-size:11px;font-weight:700;color:#64748b;display:flex;gap:10px;flex-wrap:wrap;}
+    .mc-totals strong{color:#1d4ed8;}
+    .mc-totals strong.green{color:#16a34a;}
+    .mc-nav-btn{background:#fff;color:#1a56b0;border:1px solid #cbd5e1;border-radius:7px;padding:5px 11px;font-size:12px;font-weight:700;cursor:pointer;transition:all .12s;}
+    .mc-nav-btn:hover{background:#eff6ff;border-color:#1a56b0;}
+    .mc-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+    .mc-dow{text-align:center;font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.4px;padding:4px 0;}
+    .mc-cell{aspect-ratio:1.1;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;padding:5px 6px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;transition:all .1s;overflow:hidden;}
+    .mc-cell:hover{background:#eff6ff;border-color:#93c5fd;}
+    .mc-cell-out{opacity:.32;cursor:default;background:#fff;}
+    .mc-cell-out:hover{background:#fff;border-color:#e2e8f0;}
+    .mc-cell-today{background:#fef9c3;border-color:#fbbf24;}
+    .mc-cell-today:hover{background:#fef08a;border-color:#f59e0b;}
+    .mc-cell-sel{background:#dbeafe !important;border-color:#1d4ed8 !important;border-width:2px;}
+    .mc-day{font-size:14px;font-weight:700;color:#0f172a;line-height:1;}
+    .mc-day-out{color:#cbd5e1;}
+    .mc-info{font-size:10px;line-height:1.25;}
+    .mc-pac{color:#1d4ed8;font-weight:800;}
+    .mc-money{color:#15803d;font-weight:700;font-size:9px;}
+    @media(max-width:640px){
+      #calWrap{max-height:55vh;}
+      #monthlyCalWrap{padding:10px 8px;}
+      .mc-cell{padding:3px 4px;}
+      .mc-day{font-size:12px;}
+      .mc-info{font-size:9px;}
+      .mc-money{font-size:8px;}
+      .mc-title{font-size:13px;}
+    }
     .cal-table{border-collapse:collapse;width:100%;min-width:700px;}
     .cal-table th,.cal-table td{border:1px solid #e2e8f0;}
     .cal-table th.time-th{position:sticky;top:0;left:0;z-index:4;background:#f8fafc;width:60px;min-width:60px;font-size:11px;color:#64748b;}
@@ -370,8 +403,18 @@
 </div>
 
 <!-- VIEWS -->
-<div id="viewAgenda" style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+<div id="viewAgenda" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;">
   <div id="calWrap"><div id="calInner"></div></div>
+  <div id="monthlyCalWrap">
+    <div class="mc-header">
+      <button type="button" class="mc-nav-btn" onclick="monthlyPrev()">← Mes anterior</button>
+      <button type="button" class="mc-nav-btn" onclick="monthlyToday()">Hoy</button>
+      <button type="button" class="mc-nav-btn" onclick="monthlyNext()">Mes siguiente →</button>
+      <div class="mc-title" id="mcTitle">—</div>
+      <div class="mc-totals" id="mcTotals"></div>
+    </div>
+    <div class="mc-grid" id="mcGrid"></div>
+  </div>
 </div>
 
 <div id="viewPacientes" class="hidden" style="flex:1;overflow-y:auto;padding:20px;">
@@ -1211,6 +1254,7 @@ function checkSession(){
   if(currentSession){
     showApp();
     renderCalendar();
+    renderMonthlyCalendar();
     if(fbOK) startSync();
   } else {
     showLoginScreen();
@@ -1264,6 +1308,7 @@ function doAdminLogin(){
     setSession({role:'admin', name:'Daniel Marrero'});
     showApp();
     renderCalendar();
+    renderMonthlyCalendar();
     if(fbOK) startSync();
   } else {
     err.textContent = 'Usuario o contraseña incorrectos.';
@@ -1283,6 +1328,7 @@ function doUserLogin(){
     setSession({role:'user', name:found.name});
     showApp();
     renderCalendar();
+    renderMonthlyCalendar();
     if(fbOK) startSync();
   } else {
     err.textContent = 'PIN incorrecto. Inténtalo de nuevo.';
@@ -1538,6 +1584,7 @@ function scheduleWrite(dateKey){
 // Refresh all views that depend on appointments data
 function refreshAfterScheduleChange(){
   renderCalendar();
+  if(typeof renderMonthlyCalendar==='function') renderMonthlyCalendar();
   if(currentView==='pacientes') renderPacientes();
   if(currentView==='finanzas') renderFinanzas();
 }
@@ -1811,10 +1858,87 @@ function renderCalendar(){
   document.getElementById('calInner').innerHTML=html;
 }
 
-function prevWeek(){ state.weekStart.setDate(state.weekStart.getDate()-7); renderCalendar(); }
-function nextWeek(){ state.weekStart.setDate(state.weekStart.getDate()+7); renderCalendar(); }
-function goToday(){ state.weekStart=getWeekStart(today); state.selectedDate=toDateKey(today); renderCalendar(); }
-function selectDate(dk){ state.selectedDate=dk; state.weekStart=getWeekStart(parseDateKey(dk)); renderCalendar(); }
+function prevWeek(){ state.weekStart.setDate(state.weekStart.getDate()-7); renderCalendar(); renderMonthlyCalendar(); }
+function nextWeek(){ state.weekStart.setDate(state.weekStart.getDate()+7); renderCalendar(); renderMonthlyCalendar(); }
+function goToday(){ state.weekStart=getWeekStart(today); state.selectedDate=toDateKey(today); monthlyViewDate=new Date(today); renderCalendar(); renderMonthlyCalendar(); }
+function selectDate(dk){ state.selectedDate=dk; state.weekStart=getWeekStart(parseDateKey(dk)); renderCalendar(); renderMonthlyCalendar(); }
+
+// ════ MONTHLY CALENDAR ════
+let monthlyViewDate = new Date(); // anchor for the visible month
+function moneyShort(n){
+  if(!n||n<=0) return '';
+  if(n>=1000000){ const v=(n/1000000); return '$'+(v>=10?v.toFixed(0):v.toFixed(1).replace(/\.0$/,''))+'M'; }
+  if(n>=1000) return '$'+Math.round(n/1000)+'K';
+  return '$'+Math.round(n);
+}
+function monthlyPrev(){ monthlyViewDate.setMonth(monthlyViewDate.getMonth()-1); renderMonthlyCalendar(); }
+function monthlyNext(){ monthlyViewDate.setMonth(monthlyViewDate.getMonth()+1); renderMonthlyCalendar(); }
+function monthlyToday(){ monthlyViewDate = new Date(today); state.weekStart=getWeekStart(today); state.selectedDate=toDateKey(today); renderCalendar(); renderMonthlyCalendar(); }
+
+function renderMonthlyCalendar(){
+  const grid = document.getElementById('mcGrid');
+  const titleEl = document.getElementById('mcTitle');
+  const totalsEl = document.getElementById('mcTotals');
+  if(!grid || !titleEl) return;
+
+  const y = monthlyViewDate.getFullYear();
+  const m = monthlyViewDate.getMonth();
+  const firstOfMonth = new Date(y, m, 1);
+  const lastOfMonth = new Date(y, m+1, 0);
+  const monthName = firstOfMonth.toLocaleDateString('es-ES',{month:'long',year:'numeric'});
+  titleEl.textContent = monthName;
+
+  // Calculate first cell: monday before or equal to firstOfMonth
+  // JS getDay(): 0=Sunday, 1=Monday, ..., 6=Saturday
+  // We want week to start on Monday → offset = (getDay()+6)%7
+  const firstOffset = (firstOfMonth.getDay()+6)%7;
+  const gridStart = new Date(y, m, 1-firstOffset);
+  const todayKey = toDateKey(today);
+  const selKey = state.selectedDate;
+
+  // Build month aggregate stats
+  let monthCount=0, monthGross=0;
+
+  // 6 weeks × 7 days = 42 cells
+  let html = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM']
+    .map(d=>`<div class="mc-dow">${d}</div>`).join('');
+
+  for(let i=0;i<42;i++){
+    const d = new Date(gridStart);
+    d.setDate(gridStart.getDate()+i);
+    const dk = toDateKey(d);
+    const inMonth = d.getMonth()===m;
+    const isToday = dk===todayKey;
+    const isSel = dk===selKey;
+    const stats = getDayStats(dk);
+
+    if(inMonth){ monthCount += stats.count; monthGross += stats.gross; }
+
+    const cellClasses = ['mc-cell'];
+    if(!inMonth) cellClasses.push('mc-cell-out');
+    if(isToday) cellClasses.push('mc-cell-today');
+    if(isSel) cellClasses.push('mc-cell-sel');
+
+    const dayClasses = ['mc-day'];
+    if(!inMonth) dayClasses.push('mc-day-out');
+
+    const onclick = inMonth ? `onclick="selectDate('${dk}')"` : '';
+    const title = `${d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})}${stats.count?` — ${stats.count} pac. · ${money(stats.gross)}`:''}`;
+
+    html += `<div class="${cellClasses.join(' ')}" ${onclick} title="${escH(title)}">
+      <div class="${dayClasses.join(' ')}">${d.getDate()}</div>
+      <div class="mc-info">
+        ${stats.count?`<div class="mc-pac">${stats.count} pac.</div>`:''}
+        ${stats.gross?`<div class="mc-money">${moneyShort(stats.gross)}</div>`:''}
+      </div>
+    </div>`;
+  }
+
+  grid.innerHTML = html;
+  totalsEl.innerHTML = monthCount
+    ? `<span>📅 <strong>${monthCount}</strong> citas</span><span>💰 <strong class="green">${money(monthGross)}</strong></span>`
+    : '<span style="color:#94a3b8;">Sin movimientos en el mes</span>';
+}
 
 // ════ APPOINTMENT MODAL ════
 let apptContext = null;
@@ -2796,6 +2920,7 @@ function showView(v){
     document.getElementById('tab'+name.charAt(0).toUpperCase()+name.slice(1)).classList.toggle('active',name===v);
   });
   document.getElementById('toolbar').classList.toggle('hidden',v!=='agenda');
+  if(v==='agenda') renderMonthlyCalendar();
   if(v==='pacientes') renderPacientes();
   if(v==='finanzas') renderFinanzas();
 }
