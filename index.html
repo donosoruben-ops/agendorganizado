@@ -1683,18 +1683,50 @@ function getAllStats(){
 }
 
 // ════ KNOWN PATIENTS (autocomplete engine) ════
+// Combines: patients with ficha (patientsDB) + patients seen only in appointments
 function getKnownPatients(){
   const map=new Map();
+  // 1. Add patients from appointments (with last visit data)
   const sortedDates=Object.keys(state.appointments).sort().reverse();
   sortedDates.forEach(dk=>{
     const day=state.appointments[dk]||{};
     HOURS.forEach(h=>{ allBoxKeys(h).forEach(k=>{ const s=day[k]||{}; const name=(s.patient||'').trim(); if(!name) return;
       const mk=name.toLowerCase();
-      if(!map.has(mk)) map.set(mk,{name,lastSlot:{...s,dateKey:dk},count:0});
+      if(!map.has(mk)) map.set(mk,{name,lastSlot:{...s,dateKey:dk},count:0,registered:false});
       map.get(mk).count++;
     }); });
   });
-  return Array.from(map.values()).sort((a,b)=>b.count-a.count);
+  // 2. Merge in registered patients (patientsDB) — even if they never had a cita
+  Object.values(patientsDB||{}).forEach(p=>{
+    const fullName = patientFullName(p);
+    if(!fullName) return;
+    const mk = fullName.toLowerCase();
+    if(map.has(mk)){
+      // Already known from appointments — enrich with ficha info
+      const ent = map.get(mk);
+      ent.registered = true;
+      ent.patientId = p.id;
+      ent.ficha = p.ficha;
+      ent.tel1 = p.tel1; ent.email = p.email; ent.rut = p.rut;
+    } else {
+      map.set(mk, {
+        name: fullName,
+        lastSlot: { attentionType:'', origin:'propio', amount:'' },
+        count: 0,
+        registered: true,
+        patientId: p.id,
+        ficha: p.ficha,
+        tel1: p.tel1, email: p.email, rut: p.rut
+      });
+    }
+  });
+  // Sort: registered first (alphabetical), then unregistered by visit count
+  return Array.from(map.values()).sort((a,b)=>{
+    if(a.registered && !b.registered) return -1;
+    if(!a.registered && b.registered) return 1;
+    if(a.registered && b.registered) return a.name.localeCompare(b.name,'es');
+    return b.count-a.count;
+  });
 }
 
 // ════ CALENDAR RENDER ════
@@ -2168,7 +2200,14 @@ async function apptRemovePhoto(photoId){
 function onPatientInput(){
   const q=document.getElementById('apptPatient').value.trim();
   if(q.length<2){ document.getElementById('acDrop').classList.add('hidden'); return; }
-  const results=getKnownPatients().filter(p=>p.name.toLowerCase().includes(q.toLowerCase())).slice(0,8);
+  const lc=q.toLowerCase();
+  const results=getKnownPatients().filter(p=>{
+    if(p.name.toLowerCase().includes(lc)) return true;
+    if(p.email && p.email.toLowerCase().includes(lc)) return true;
+    if(p.tel1 && p.tel1.toLowerCase().includes(lc)) return true;
+    if(p.rut && p.rut.toLowerCase().includes(lc)) return true;
+    return false;
+  }).slice(0,10);
   acResults=results; acIndex=-1;
   const drop=document.getElementById('acDrop');
   if(!results.length){
@@ -2176,10 +2215,19 @@ function onPatientInput(){
     drop.firstChild.onclick=()=>{ document.getElementById('apptPatient').value=q; drop.classList.add('hidden'); };
   } else {
     drop.innerHTML=results.map((p,i)=>{
-      const lastDate=parseDateKey(p.lastSlot.dateKey).toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'});
+      const lastDate=p.lastSlot && p.lastSlot.dateKey
+        ? parseDateKey(p.lastSlot.dateKey).toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'})
+        : null;
+      const fichaBadge = p.registered
+        ? `<span style="background:#dbeafe;color:#1e40af;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;margin-left:6px;">Ficha #${p.ficha||'—'}</span>`
+        : '';
+      const metaParts = [];
+      if(p.count>0 && lastDate) metaParts.push(`Última: ${lastDate} · ${escH(p.lastSlot.attentionType||'—')} · ${p.count} cita(s)`);
+      else if(p.registered) metaParts.push('Paciente con ficha (sin citas previas)');
+      if(p.tel1) metaParts.push('📱 '+escH(p.tel1));
       return `<div class="ac-item" data-idx="${i}">
-        <div class="ac-name">${escH(p.name)}</div>
-        <div class="ac-meta">Última visita: ${lastDate} · ${escH(p.lastSlot.attentionType||'—')} · ${money(Number(p.lastSlot.amount)||0)} · ${p.count} cita(s)</div>
+        <div class="ac-name">${escH(p.name)}${fichaBadge}</div>
+        ${metaParts.length?`<div class="ac-meta">${metaParts.join(' · ')}</div>`:''}
       </div>`;
     }).join('')+`<div class="ac-item" style="border-top:1px solid #e2e8f0"><span class="ac-new">➕ Nuevo: "${escH(q)}"</span></div>`;
     drop.querySelectorAll('.ac-item[data-idx]').forEach(el=>{
@@ -2202,9 +2250,10 @@ function onPatientKeydown(e){
 
 function selectPatient(p){
   document.getElementById('apptPatient').value=p.name;
-  document.getElementById('apptType').value=p.lastSlot.attentionType||'';
-  document.getElementById('apptOrigin').value=p.lastSlot.origin||'propio';
-  document.getElementById('apptAmount').value=p.lastSlot.amount||'';
+  const last = p.lastSlot || {};
+  document.getElementById('apptType').value=last.attentionType||'';
+  document.getElementById('apptOrigin').value=last.origin||'propio';
+  document.getElementById('apptAmount').value=last.amount||'';
   document.getElementById('acDrop').classList.add('hidden');
   updateSplitPreview();
   document.getElementById('apptType').focus();
