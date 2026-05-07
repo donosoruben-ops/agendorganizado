@@ -58,7 +58,7 @@
     #profBadge{font-size:12px;font-weight:700;color:var(--blue);background:var(--blue-lt);border:1px solid #bfdbfe;border-radius:6px;padding:4px 12px;}
 
     /* ── CALENDAR ── */
-    #calWrap{flex:0 1 auto;overflow:auto;max-height:62vh;}
+    #calWrap{flex:1 1 auto;overflow:auto;min-height:55vh;}
 
     /* ── MONTHLY CALENDAR ── */
     #monthlyCalWrap{flex-shrink:0;border-top:2px solid #e2e8f0;background:#fff;padding:14px 16px;}
@@ -84,7 +84,7 @@
     .mc-pac{color:#1d4ed8;font-weight:800;}
     .mc-money{color:#15803d;font-weight:700;font-size:9px;}
     @media(max-width:640px){
-      #calWrap{max-height:55vh;}
+      #calWrap{min-height:50vh;}
       #monthlyCalWrap{padding:10px 8px;}
       .mc-cell{padding:3px 4px;}
       .mc-day{font-size:12px;}
@@ -403,7 +403,7 @@
 </div>
 
 <!-- VIEWS -->
-<div id="viewAgenda" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;">
+<div id="viewAgenda" style="flex:1;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;">
   <div id="calWrap"><div id="calInner"></div></div>
   <div id="monthlyCalWrap">
     <div class="mc-header">
