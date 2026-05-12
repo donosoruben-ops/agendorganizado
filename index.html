@@ -201,12 +201,58 @@
     @keyframes spin{to{transform:rotate(360deg)}}
     .spin{animation:spin .7s linear infinite;display:inline-block;width:16px;height:16px;border:2px solid #bfdbfe;border-top-color:var(--blue);border-radius:50%;}
 
+    /* ── PANEL AGENDO (admin landing) ── */
+    #agendoPanel{position:fixed;inset:0;background:linear-gradient(140deg,#0f2563 0%,#1e3a8a 55%,#1a56b0 100%);z-index:180;display:none;flex-direction:column;overflow-y:auto;padding:24px 32px 60px;}
+    #agendoPanel.show{display:flex;}
+    .ap-header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:32px;flex-wrap:wrap;}
+    .ap-header-brand{display:flex;align-items:center;gap:16px;}
+    .ap-header-brand img{height:84px;border-radius:10px;background:#fff;padding:5px;}
+    .ap-header-brand h1{color:#fff;font-size:22px;font-weight:800;letter-spacing:.3px;margin:0;}
+    .ap-header-brand .ap-subtitle{color:rgba(255,255,255,.7);font-size:12px;margin-top:2px;}
+    .ap-header-actions{display:flex;align-items:center;gap:10px;}
+    .ap-btn-logout{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;transition:background .12s;}
+    .ap-btn-logout:hover{background:rgba(255,255,255,.25);}
+    .ap-section-title{color:#fff;font-size:14px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+    .ap-btn-new{background:#16a34a;border:none;color:#fff;border-radius:8px;padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;transition:background .12s;display:inline-flex;align-items:center;gap:6px;}
+    .ap-btn-new:hover{background:#15803d;}
+    .ap-clients-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;}
+    .ap-client-card{background:#fff;border-radius:14px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,.25);display:flex;flex-direction:column;gap:14px;transition:transform .14s, box-shadow .14s;}
+    .ap-client-card:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(0,0,0,.32);}
+    .ap-client-head{display:flex;align-items:center;gap:14px;}
+    .ap-client-logo{width:64px;height:64px;border-radius:10px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;border:1px solid #e2e8f0;}
+    .ap-client-logo img{max-width:100%;max-height:100%;object-fit:contain;}
+    .ap-client-logo span{font-size:30px;color:#94a3b8;}
+    .ap-client-name{font-weight:800;font-size:15px;color:#0f172a;line-height:1.25;}
+    .ap-client-meta{font-size:11px;color:#64748b;margin-top:3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+    .ap-client-meta .meta-pill{background:#f1f5f9;padding:2px 8px;border-radius:10px;font-weight:700;color:#475569;}
+    .ap-client-meta .meta-pill.aag-on{background:#dcfce7;color:#15803d;}
+    .ap-client-meta .meta-pill.aag-off{background:#fee2e2;color:#b91c1c;}
+    .ap-client-actions{display:flex;gap:8px;flex-wrap:wrap;}
+    .ap-btn-enter{flex:1;background:var(--blue);color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;transition:background .12s;}
+    .ap-btn-enter:hover{background:var(--blue2);}
+    .ap-btn-del{background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;transition:all .12s;}
+    .ap-btn-del:hover{background:#fecaca;}
+    .ap-empty{color:rgba(255,255,255,.7);text-align:center;padding:40px;background:rgba(255,255,255,.06);border-radius:14px;border:1px dashed rgba(255,255,255,.25);}
+    #navBackPanelBtn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-weight:700;margin-right:8px;display:none;align-items:center;gap:4px;}
+    #navBackPanelBtn:hover{background:rgba(255,255,255,.25);}
+    #navBackPanelBtn.show{display:inline-flex;}
+
     /* ── CONFIG MODAL ── */
-    #cfgModal .modal-box{max-width:520px;max-height:90vh;overflow-y:auto;}
-    .cfg-tabs{display:flex;border-bottom:2px solid #f1f5f9;background:#f8fafc;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+    #cfgModal .modal-box{max-width:820px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;}
+    .cfg-body{display:flex;flex-direction:row-reverse;flex:1;min-height:0;overflow:hidden;}
+    .cfg-tabs{display:flex;flex-direction:column;background:#f8fafc;border-left:1px solid #e2e8f0;width:180px;flex-shrink:0;padding:14px 8px;gap:4px;overflow-y:auto;}
     .cfg-tabs::-webkit-scrollbar{display:none;}
-    .cfg-tab{flex:1;min-width:84px;padding:10px 8px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:#94a3b8;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .14s;white-space:nowrap;}
-    .cfg-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+    .cfg-tab{padding:11px 12px;text-align:left;font-size:13px;font-weight:700;cursor:pointer;color:#64748b;border-radius:8px;border:1px solid transparent;transition:all .14s;display:flex;align-items:center;gap:8px;}
+    .cfg-tab:hover{background:#eef2f7;color:#0f172a;}
+    .cfg-tab.active{background:#fff;color:var(--blue);border-color:#bfdbfe;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+    .cfg-content{flex:1;min-width:0;overflow-y:auto;padding:18px 22px;}
+    @media (max-width:700px){
+      #cfgModal .modal-box{max-width:96vw;}
+      .cfg-body{flex-direction:column;}
+      .cfg-tabs{flex-direction:row;width:auto;border-left:none;border-bottom:1px solid #e2e8f0;padding:8px;overflow-x:auto;}
+      .cfg-tab{flex:1;min-width:90px;justify-content:center;}
+      .cfg-content{padding:14px 16px;}
+    }
     .cfg-section{padding:18px;display:flex;flex-direction:column;gap:14px;}
     #logoPreview{width:100%;max-height:200px;object-fit:contain;border-radius:10px;border:1px solid #e2e8f0;background:#f8fafc;display:none;margin-top:8px;}
     #logoPlaceholder{border:2px dashed #cbd5e1;border-radius:10px;padding:40px 24px;text-align:center;color:#94a3b8;font-size:14px;cursor:pointer;transition:all .12s;display:flex;flex-direction:column;align-items:center;gap:8px;}
@@ -413,7 +459,7 @@
 <div id="loginScreen">
   <div class="login-card">
     <div class="login-brand">
-      <img id="loginAgendoLogo" src="agendo-logo.png?v=5" alt="AgendOrganizado">
+      <img id="loginAgendoLogo" src="agendo-logo.png?v=6" alt="AgendOrganizado">
       <div id="loginBrandPara" style="display:none;">para:</div>
       <img id="loginBrandLogo" src="" alt="logo">
       <div id="loginBrandName" style="display:none;"></div>
@@ -457,6 +503,28 @@
   </div>
 </div>
 
+<!-- ══ PANEL AGENDO (admin landing) ══ -->
+<div id="agendoPanel">
+  <div class="ap-header">
+    <div class="ap-header-brand">
+      <img src="agendo-logo.png?v=6" alt="AgendOrganizado">
+      <div>
+        <h1>Panel AgendO</h1>
+        <div class="ap-subtitle">Plataforma multi-cliente · gestiona tus negocios</div>
+      </div>
+    </div>
+    <div class="ap-header-actions">
+      <span id="apAdminBadge" style="color:rgba(255,255,255,.85);font-size:13px;font-weight:600;margin-right:6px;"></span>
+      <button type="button" class="ap-btn-logout" onclick="doLogout()">🚪 Cerrar sesión</button>
+    </div>
+  </div>
+  <div class="ap-section-title">
+    <span>🏢 Tus clientes</span>
+    <button type="button" class="ap-btn-new" onclick="addNewClient()">➕ Nuevo cliente</button>
+  </div>
+  <div id="agendoPanelGrid" class="ap-clients-grid"></div>
+</div>
+
 <!-- SETUP BANNER -->
 <div id="setupBanner" class="hidden">
   ⚠️ Firebase no configurado — trabajando en modo local (solo este dispositivo).
@@ -475,8 +543,9 @@
 
 <!-- TOP NAV -->
 <nav id="topNav">
+  <button type="button" id="navBackPanelBtn" onclick="exitToAgendoPanel()" title="Volver al Panel AgendO">← Panel</button>
   <div id="navBrand">
-    <img id="navAgendoLogo" src="agendo-logo.png?v=5" alt="AgendOrganizado">
+    <img id="navAgendoLogo" src="agendo-logo.png?v=6" alt="AgendOrganizado">
     <span id="navBrandPara" style="display:none;">para:</span>
     <img id="navLogo" src="" alt="logo">
     <span id="navName"></span>
@@ -652,17 +721,18 @@
 <div id="cfgModal" class="modal-bg hidden">
   <div class="modal-box">
     <div class="modal-hd">
-      <h3>Configuración</h3>
+      <h3 id="cfgModalTitle">Configuración del cliente</h3>
       <button type="button" onclick="closeCfgModal()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:16px;">✕</button>
     </div>
-    <!-- Tabs -->
+    <div class="cfg-body">
+    <!-- Sidebar derecha -->
     <div class="cfg-tabs">
       <div class="cfg-tab active" id="cfgTabClinica" onclick="switchCfgTab('clinica')">🏥 Clínica</div>
-      <div class="cfg-tab" id="cfgTabUsuarios" onclick="switchCfgTab('usuarios')">👥 Usuarios</div>
+      <div class="cfg-tab" id="cfgTabUsuarios" onclick="switchCfgTab('usuarios')">👥 Colaboradores</div>
       <div class="cfg-tab" id="cfgTabBoxes" onclick="switchCfgTab('boxes')">📦 Boxes</div>
       <div class="cfg-tab" id="cfgTabServicios" onclick="switchCfgTab('servicios')">💈 Servicios</div>
-      <div class="cfg-tab" id="cfgTabCartera" onclick="switchCfgTab('cartera')">🏢 Cartera</div>
     </div>
+    <div class="cfg-content">
     <!-- Tab: Clínica -->
     <div id="cfgSectionClinica" class="cfg-section">
       <div class="field-group">
@@ -753,49 +823,8 @@
         <button type="button" class="btn-save" onclick="saveServiciosCfg()">Guardar precios</button>
       </div>
     </div>
-    <!-- Tab: Cartera Clientes (Propietario) -->
-    <div id="cfgSectionCartera" class="cfg-section hidden" style="padding:0;">
-      <!-- Gate: master password (set first time / unlock) -->
-      <div id="cartGate" class="cart-gate">
-        <div class="cart-gate-lock">
-          <div class="lk-icon">🔐</div>
-          <h4 id="cartGateTitle">Cartera de Clientes — Acceso Propietario</h4>
-          <p id="cartGateMsg">Ingresa la contraseña maestra para gestionar tus clientes, sus llaves de IA y el servicio AAG.</p>
-        </div>
-        <div class="field-group">
-          <label id="cartGateLbl">Contraseña maestra</label>
-          <input id="cartGatePass" class="fi" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter') cartGateSubmit()">
-        </div>
-        <div id="cartGateConfirmWrap" class="field-group hidden">
-          <label>Repite la contraseña</label>
-          <input id="cartGatePassConf" class="fi" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter') cartGateSubmit()">
-        </div>
-        <div class="err" id="cartGateErr"></div>
-        <div class="modal-ft" style="padding:0;border:none;margin-top:12px;">
-          <button type="button" class="btn-cancel" onclick="closeCfgModal()">Cancelar</button>
-          <button type="button" class="btn-save" id="cartGateBtn" onclick="cartGateSubmit()">Desbloquear</button>
-        </div>
-        <div style="font-size:11px;color:#94a3b8;text-align:center;margin-top:10px;">
-          ¿Olvidaste tu contraseña? <a href="#" onclick="cartGateReset();return false;" style="color:#1a56b0;font-weight:700;text-decoration:none;">Reiniciar</a>
-        </div>
-      </div>
-      <!-- Pane: clients list -->
-      <div id="cartPane" class="cart-pane hidden">
-        <div class="cart-header">
-          <div>
-            <h4>🏢 Mis Clientes <span class="cart-count" id="cartCount">0</span></h4>
-            <div style="font-size:10px;color:#64748b;margin-top:2px;">Plataforma AgendOrganizado · Propietario</div>
-          </div>
-          <button type="button" class="cart-add-btn" onclick="cartAddClient()">+ Nuevo Cliente</button>
-        </div>
-        <div id="cartList" class="cart-list"></div>
-        <div id="cartEmpty" class="cart-empty hidden">Aún no agregas clientes. Toca "+ Nuevo Cliente" para empezar.</div>
-      </div>
-      <div id="cartFooter" class="cart-footer hidden">
-        <button type="button" class="lock-btn" onclick="cartLock()">🔒 Bloquear cartera</button>
-        <button type="button" class="btn-cancel" onclick="closeCfgModal()">Cerrar</button>
-      </div>
-    </div>
+    </div><!-- /cfg-content -->
+    </div><!-- /cfg-body -->
   </div>
 </div>
 
@@ -1375,6 +1404,8 @@ function saveAuth(){
     saveConfigDoc('auth',{adminUser:authCfg.adminUser, adminPass:authCfg.adminPass});
     saveConfigDoc('users',{list:usersList});
   }
+  // Sync colaboradores del cliente activo
+  if(typeof syncActiveClientFromGlobals === 'function') syncActiveClientFromGlobals();
 }
 function getCookie(name){
   const m = document.cookie.match(new RegExp('(?:^|; )'+name+'=([^;]*)'));
@@ -1424,10 +1455,19 @@ function checkSession(){
       currentSession.name = 'Rubén Donoso';
       setSession(currentSession);
     }
-    showApp();
-    renderCalendar();
-    renderMonthlyCalendar();
-    if(fbOK) startSync();
+    if(currentSession.role === 'admin'){
+      // Admin reload: aplicar último cliente activo si existe, mostrar Panel.
+      if(activeClientId){ applyActiveClient(); }
+      showAgendoPanel();
+      if(fbOK) startSync();
+    } else {
+      // Colaborador: ya tiene activeClientId asociado, entrar directo a su workspace.
+      applyActiveClient();
+      showApp();
+      renderCalendar();
+      renderMonthlyCalendar();
+      if(fbOK) startSync();
+    }
   } else {
     showLoginScreen();
   }
@@ -1447,9 +1487,12 @@ function showLoginScreen(){
 
 function showApp(){
   document.getElementById('loginScreen').style.display = 'none';
+  const panel = document.getElementById('agendoPanel');
+  if(panel) panel.classList.remove('show');
   applyRoleUI();
   updateUserBadge();
   updateAagBadge();
+  updateNavBrand();
 }
 
 function applyRoleUI(){
@@ -1458,6 +1501,9 @@ function applyRoleUI(){
   document.getElementById('tabFinanzas').style.display = '';
   // Config button: admin only
   document.getElementById('cfgBtn').style.display = admin ? '' : 'none';
+  // Botón "← Panel" en navbar: solo admin (vuelve al Panel AgendO)
+  const backBtn = document.getElementById('navBackPanelBtn');
+  if(backBtn) backBtn.classList.toggle('show', admin);
 }
 
 function updateUserBadge(){
@@ -1479,9 +1525,8 @@ function doAdminLogin(){
   const err  = document.getElementById('adminErr');
   if(user === authCfg.adminUser && pass === authCfg.adminPass){
     setSession({role:'admin', name:'Rubén Donoso'});
-    showApp();
-    renderCalendar();
-    renderMonthlyCalendar();
+    // Admin: ir al Panel AgendO en lugar del workspace directo.
+    showAgendoPanel();
     if(fbOK) startSync();
   } else {
     err.textContent = 'Usuario o contraseña incorrectos.';
@@ -1492,13 +1537,20 @@ function doAdminLogin(){
 }
 
 function doUserLogin(){
-  const name = document.getElementById('loginUserName').value;
-  const pin  = document.getElementById('loginUserPin').value.trim();
-  const err  = document.getElementById('userErr');
-  if(!name){ err.textContent='Selecciona tu nombre.'; err.style.display='block'; return; }
-  const found = usersList.find(u => u.name === name && u.pin === pin);
+  const value = document.getElementById('loginUserName').value;
+  const pin   = document.getElementById('loginUserPin').value.trim();
+  const err   = document.getElementById('userErr');
+  if(!value){ err.textContent='Selecciona tu nombre.'; err.style.display='block'; return; }
+  // value tiene formato "clientId::userName" (ver populateUserDropdown).
+  const [clientId, name] = value.split('::');
+  const client = carteraClients.find(c => c.id === clientId);
+  if(!client){ err.textContent='Cliente no encontrado.'; err.style.display='block'; return; }
+  const found = (client.users||[]).find(u => u.name === name && u.pin === pin);
   if(found){
-    setSession({role:'user', name:found.name});
+    activeClientId = client.id;
+    try{ localStorage.setItem(ACTIVE_CLIENT_LS_KEY, activeClientId); }catch(e){}
+    applyActiveClient();
+    setSession({role:'user', name:found.name, clientId:client.id});
     showApp();
     renderCalendar();
     renderMonthlyCalendar();
@@ -1532,13 +1584,23 @@ function switchLoginTab(tab){
 function populateUserDropdown(){
   const sel = document.getElementById('loginUserName');
   sel.innerHTML = '<option value="">— Selecciona —</option>';
-  usersList.forEach(u => {
-    const opt = document.createElement('option');
-    opt.value = u.name;
-    opt.textContent = u.name;
-    sel.appendChild(opt);
+  // Recorre TODOS los clientes y arma una lista plana "Cliente · Colaborador"
+  ensureAllClientsShape && ensureAllClientsShape();
+  let total = 0;
+  (carteraClients || []).forEach(client => {
+    if(!client.users || !client.users.length) return;
+    const grp = document.createElement('optgroup');
+    grp.label = client.name || 'Cliente';
+    client.users.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = `${client.id}::${u.name}`;
+      opt.textContent = u.name;
+      grp.appendChild(opt);
+      total++;
+    });
+    sel.appendChild(grp);
   });
-  if(!usersList.length){
+  if(!total){
     sel.innerHTML = '<option value="">Sin colaboradores registrados</option>';
   }
 }
@@ -1730,51 +1792,29 @@ async function saveCarteraRemote(){
 function loadCarteraFromRemote(d){
   if(!d) return;
   if(Array.isArray(d.clients)) carteraClients = d.clients;
-  if(d.passHash) cartPassHash = d.passHash;
-  try{
-    localStorage.setItem(CART_LS_KEY, JSON.stringify(carteraClients));
-    if(cartPassHash) localStorage.setItem(CART_PASS_LS_KEY, cartPassHash);
-  }catch(e){}
-  if(cfgTab === 'cartera') cartShow();
+  if(typeof ensureAllClientsShape === 'function') ensureAllClientsShape();
+  // Si Firestore aún tiene el formato viejo (sin users/boxes por cliente),
+  // re-enriquecer el primer cliente con los datos legacy de localStorage.
+  if(typeof migrateLegacyToFirstClient === 'function') migrateLegacyToFirstClient();
+  try{ localStorage.setItem(CART_LS_KEY, JSON.stringify(carteraClients)); }catch(e){}
+  // Si el cliente activo sigue presente, re-aplicar sus valores a los globals.
+  if(typeof applyActiveClient === 'function' && activeClientId &&
+     carteraClients.find(c => c.id === activeClientId)){
+    applyActiveClient();
+  }
+  // Si el Panel AgendO está visible, re-render.
+  if(typeof renderAgendoPanel === 'function' &&
+     document.getElementById('agendoPanel')?.classList.contains('show')){
+    renderAgendoPanel();
+  }
 }
 
+// cartShow se mantiene solo como hook para el listener Firestore; ya no hay UI gate.
 function cartShow(){
-  const gate = document.getElementById('cartGate');
-  const pane = document.getElementById('cartPane');
-  const footer = document.getElementById('cartFooter');
-  const gateTitle = document.getElementById('cartGateTitle');
-  const gateMsg = document.getElementById('cartGateMsg');
-  const gateLbl = document.getElementById('cartGateLbl');
-  const gateBtn = document.getElementById('cartGateBtn');
-  const confirmWrap = document.getElementById('cartGateConfirmWrap');
-  const err = document.getElementById('cartGateErr');
-  err.style.display = 'none';
-  document.getElementById('cartGatePass').value = '';
-  document.getElementById('cartGatePassConf').value = '';
-  if(cartUnlocked){
-    gate.classList.add('hidden');
-    pane.classList.remove('hidden');
-    footer.classList.remove('hidden');
-    renderCartera();
-    return;
+  // El Panel AgendO refleja el estado actualizado de carteraClients.
+  if(typeof renderAgendoPanel === 'function' && document.getElementById('agendoPanel')?.classList.contains('show')){
+    renderAgendoPanel();
   }
-  pane.classList.add('hidden');
-  footer.classList.add('hidden');
-  gate.classList.remove('hidden');
-  if(!cartPassHash){
-    gateTitle.textContent = 'Configura tu contraseña maestra';
-    gateMsg.textContent = 'Esta es la primera vez. Define una contraseña que solo tú conozcas — protege el listado de tus clientes y sus llaves de IA.';
-    gateLbl.textContent = 'Nueva contraseña maestra';
-    gateBtn.textContent = 'Crear contraseña';
-    confirmWrap.classList.remove('hidden');
-  } else {
-    gateTitle.textContent = 'Cartera de Clientes — Acceso Propietario';
-    gateMsg.textContent = 'Ingresa la contraseña maestra para gestionar tus clientes, sus llaves de IA y el servicio AAG.';
-    gateLbl.textContent = 'Contraseña maestra';
-    gateBtn.textContent = 'Desbloquear';
-    confirmWrap.classList.add('hidden');
-  }
-  setTimeout(()=>document.getElementById('cartGatePass').focus(), 80);
 }
 
 async function cartGateSubmit(){
@@ -2032,6 +2072,215 @@ function renderCartera(){
 
 loadCarteraLocal();
 
+// ════════════════════════════════════════════════════════════════
+// ═══ MULTI-CLIENT LAYER (Phase A) ═══
+// Cada entrada de carteraClients es un "cliente" (tenant) de AgendO.
+// Los globals clinicConfig / usersList / boxesConfig / serviciosCfg son una
+// vista del cliente activo. Datos operativos (citas/pacientes/finanzas) son
+// compartidos en Phase A — solo la configuración es per-cliente.
+// ════════════════════════════════════════════════════════════════
+let activeClientId = '';
+const ACTIVE_CLIENT_LS_KEY = 'agendOrgActiveClientId';
+
+function ensureClientShape(c){
+  if(!c) return;
+  if(!Array.isArray(c.users)) c.users = [];
+  if(!Array.isArray(c.boxes) || c.boxes.length === 0) c.boxes = [...DEFAULT_BOXES];
+  if(!c.services || typeof c.services !== 'object') c.services = null;
+}
+function ensureAllClientsShape(){ carteraClients.forEach(ensureClientShape); }
+
+function getActiveClient(){
+  ensureAllClientsShape();
+  if(!carteraClients.length) return null;
+  return carteraClients.find(c => c.id === activeClientId) || carteraClients[0];
+}
+
+// Sync globals → from the active client (called when entering/switching client)
+function applyActiveClient(){
+  const c = getActiveClient();
+  if(!c){
+    clinicConfig.name = '';
+    clinicConfig.logo = '';
+    usersList = [];
+    boxesConfig = [...DEFAULT_BOXES];
+    return;
+  }
+  activeClientId = c.id;
+  try{ localStorage.setItem(ACTIVE_CLIENT_LS_KEY, activeClientId); }catch(e){}
+  clinicConfig.name = c.name || '';
+  clinicConfig.logo = c.logo || '';
+  usersList = c.users.slice();
+  boxesConfig = c.boxes.slice(0, NUM_BOXES);
+  while(boxesConfig.length < NUM_BOXES) boxesConfig.push('Box '+(boxesConfig.length+1));
+  if(c.services) serviciosCfg = c.services;
+  try{
+    localStorage.setItem(CLINIC_CFG_KEY, JSON.stringify({name:c.name||'', logo:c.logo||'', boxes:boxesConfig}));
+    localStorage.setItem(USERS_CFG_KEY, JSON.stringify(usersList));
+  }catch(e){}
+  updateNavBrand();
+  updateLoginBrand();
+  populateUserDropdown();
+  rebuildBoxSelect && rebuildBoxSelect();
+}
+
+// Sync globals → into the active client (called after editing in cfgModal)
+function syncActiveClientFromGlobals(){
+  const c = getActiveClient();
+  if(!c) return;
+  c.name  = clinicConfig.name || '';
+  c.logo  = clinicConfig.logo || '';
+  c.users = usersList.slice();
+  c.boxes = boxesConfig.slice(0, NUM_BOXES);
+  if(serviciosCfg) c.services = serviciosCfg;
+  saveCarteraLocal();
+  saveCarteraRemote();
+}
+
+// Restore active client id from localStorage (admin reload mid-session)
+function restoreActiveClientId(){
+  try{
+    const saved = localStorage.getItem(ACTIVE_CLIENT_LS_KEY);
+    if(saved && carteraClients.find(c => c.id === saved)) activeClientId = saved;
+    else if(carteraClients[0]) activeClientId = carteraClients[0].id;
+  }catch(e){ if(carteraClients[0]) activeClientId = carteraClients[0].id; }
+}
+
+// Migration: on first load with new code, enrich the seed client with the
+// existing single-tenant clinicConfig + usersList + boxesConfig.
+function migrateLegacyToFirstClient(){
+  ensureAllClientsShape();
+  if(!carteraClients.length) return;
+  const first = carteraClients[0];
+  const hasUsers  = first.users && first.users.length > 0;
+  const hasBoxes  = first.boxes && first.boxes.some(b => b && b !== 'Box 1' && b !== 'Box 2' && b !== 'Box 3' && b !== 'Box 4');
+  let touched = false;
+  // Legacy clinicConfig from localStorage (loaded before this runs)
+  try{
+    const legacyClinic = JSON.parse(localStorage.getItem(CLINIC_CFG_KEY) || 'null');
+    if(legacyClinic){
+      if(!first.name && legacyClinic.name){ first.name = legacyClinic.name; touched = true; }
+      if(!first.logo && legacyClinic.logo){ first.logo = legacyClinic.logo; touched = true; }
+      if(!hasBoxes && Array.isArray(legacyClinic.boxes) && legacyClinic.boxes.length){
+        first.boxes = legacyClinic.boxes.slice(0, NUM_BOXES); touched = true;
+      }
+    }
+  }catch(e){}
+  try{
+    const legacyUsers = JSON.parse(localStorage.getItem(USERS_CFG_KEY) || 'null');
+    if(!hasUsers && Array.isArray(legacyUsers) && legacyUsers.length){
+      first.users = legacyUsers; touched = true;
+    }
+  }catch(e){}
+  if(touched){ saveCarteraLocal(); saveCarteraRemote(); }
+}
+
+// ════ PANEL AGENDO ════
+function showAgendoPanel(){
+  // Hide login + main app, show panel.
+  document.getElementById('loginScreen').style.display = 'none';
+  document.body.classList.add('panel-mode');
+  const panel = document.getElementById('agendoPanel');
+  panel.classList.add('show');
+  // Admin badge
+  const badge = document.getElementById('apAdminBadge');
+  if(badge) badge.textContent = currentSession ? `👤 ${currentSession.name}` : '';
+  renderAgendoPanel();
+}
+
+function hideAgendoPanel(){
+  document.getElementById('agendoPanel').classList.remove('show');
+  document.body.classList.remove('panel-mode');
+}
+
+function renderAgendoPanel(){
+  ensureAllClientsShape();
+  const grid = document.getElementById('agendoPanelGrid');
+  if(!grid) return;
+  if(!carteraClients.length){
+    grid.innerHTML = `<div class="ap-empty">Aún no tienes clientes. Toca <strong>+ Nuevo cliente</strong> para empezar.</div>`;
+    return;
+  }
+  grid.innerHTML = carteraClients.map(c => {
+    const nUsers = (c.users||[]).length;
+    const aagOn = c.aagActive !== false;
+    const logoHtml = c.logo
+      ? `<img src="${c.logo}" alt="logo">`
+      : `<span>🏢</span>`;
+    return `
+      <div class="ap-client-card" data-client-id="${escH(c.id)}">
+        <div class="ap-client-head">
+          <div class="ap-client-logo">${logoHtml}</div>
+          <div style="flex:1;min-width:0;">
+            <div class="ap-client-name">${escH(c.name||'Cliente sin nombre')}</div>
+            <div class="ap-client-meta">
+              <span class="meta-pill">${nUsers} colaborador${nUsers===1?'':'es'}</span>
+              <span class="meta-pill ${aagOn?'aag-on':'aag-off'}">AAG ${aagOn?'✓':'✗'}</span>
+            </div>
+          </div>
+        </div>
+        <div class="ap-client-actions">
+          <button type="button" class="ap-btn-enter" onclick="enterClient('${escH(c.id)}')">Entrar →</button>
+          <button type="button" class="ap-btn-del" onclick="deleteClientFromPanel('${escH(c.id)}')" title="Eliminar cliente">🗑</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function enterClient(id){
+  const c = carteraClients.find(x=>x.id===id);
+  if(!c){ alert('Cliente no encontrado.'); return; }
+  activeClientId = id;
+  try{ localStorage.setItem(ACTIVE_CLIENT_LS_KEY, id); }catch(e){}
+  applyActiveClient();
+  hideAgendoPanel();
+  showApp();
+  renderCalendar();
+  renderMonthlyCalendar();
+  if(fbOK && typeof startSync === 'function') startSync();
+}
+
+function exitToAgendoPanel(){
+  if(!isAdmin()) return;
+  showAgendoPanel();
+}
+
+function addNewClient(){
+  const name = prompt('Nombre del nuevo cliente (puedes cambiarlo después):', 'Nuevo cliente');
+  if(name === null) return;
+  const id = 'cli_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  carteraClients.push({
+    id, name: name.trim() || 'Nuevo cliente',
+    logo:'', contactEmail:'', contactWhatsapp:'',
+    aiProvider:'claude', apiKey:'', apiKeySaved:false, aagActive:false,
+    notes:'', status:'', lastTest:'',
+    users:[], boxes:[...DEFAULT_BOXES], services:null
+  });
+  saveCarteraLocal();
+  saveCarteraRemote();
+  renderAgendoPanel();
+}
+
+function deleteClientFromPanel(id){
+  const c = carteraClients.find(x=>x.id===id);
+  if(!c) return;
+  if(carteraClients.length === 1){ alert('No puedes eliminar el único cliente.'); return; }
+  if(!confirm(`¿Eliminar el cliente "${c.name}"? Esto borra su configuración (clínica, colaboradores, boxes, servicios). Las citas y pacientes operativos NO se borran.`)) return;
+  carteraClients = carteraClients.filter(x=>x.id!==id);
+  if(activeClientId === id){
+    activeClientId = carteraClients[0]?.id || '';
+    try{ localStorage.setItem(ACTIVE_CLIENT_LS_KEY, activeClientId); }catch(e){}
+  }
+  saveCarteraLocal();
+  saveCarteraRemote();
+  renderAgendoPanel();
+}
+
+// Ejecutar migración + restaurar cliente activo
+migrateLegacyToFirstClient();
+restoreActiveClientId();
+
 // ════ CLINIC CONFIG ════
 let clinicConfig = {name:'', logo:''};
 
@@ -2075,7 +2324,7 @@ function getClinicBrand(){
 
 // ── Config modal ──
 let cfgTab = 'clinica';
-const CFG_TABS = ['clinica','usuarios','boxes','servicios','cartera'];
+const CFG_TABS = ['clinica','usuarios','boxes','servicios'];
 function switchCfgTab(tab){
   cfgTab = tab;
   CFG_TABS.forEach(t=>{
@@ -2087,11 +2336,17 @@ function switchCfgTab(tab){
   if(tab==='usuarios') renderUsersList();
   if(tab==='boxes') renderBoxesCfg();
   if(tab==='servicios'){ initSvcEditBuf(); renderSvcAdmin(); }
-  if(tab==='cartera') cartShow();
 }
 
 function openCfgModal(){
   if(!isAdmin()){ alert('Solo el administrador puede acceder a la configuración.'); return; }
+  const active = (typeof getActiveClient === 'function') ? getActiveClient() : null;
+  const titleEl = document.getElementById('cfgModalTitle');
+  if(titleEl){
+    titleEl.textContent = active && active.name
+      ? `Configuración · ${active.name}`
+      : 'Configuración del cliente';
+  }
   document.getElementById('cfgName').value = clinicConfig.name || '';
   const prev = document.getElementById('logoPreview');
   const removeBtn = document.getElementById('logoRemoveBtn');
@@ -2162,6 +2417,7 @@ function updateCfgPreview(){
 function saveCfg(){
   clinicConfig.name = document.getElementById('cfgName').value.trim();
   saveClinicConfig();
+  syncActiveClientFromGlobals();
   updateNavBrand();
   updateLoginBrand();
   closeCfgModal();
@@ -3774,6 +4030,7 @@ async function saveBoxesCfg(){
   boxesConfig=names;
   clinicConfig.boxes=names;
   saveClinicConfig();
+  if(typeof syncActiveClientFromGlobals === 'function') syncActiveClientFromGlobals();
   rebuildBoxSelect();
   renderCalendar();
   closeCfgModal();
@@ -3833,6 +4090,7 @@ async function saveServiciosCfg(){
   }));
   serviciosCfg=cats;
   if(fbOK) await saveConfigDoc('servicios',{categorias:cats});
+  if(typeof syncActiveClientFromGlobals === 'function') syncActiveClientFromGlobals();
   svcEditBuf=null;
   closeCfgModal();
 }
