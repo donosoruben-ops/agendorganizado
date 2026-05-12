@@ -20,8 +20,10 @@
     #loginScreen{position:fixed;inset:0;background:linear-gradient(140deg,#1a56b0 0%,#1e3a8a 60%,#0f2563 100%);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
     .login-card{background:#fff;border-radius:20px;width:min(400px,100%);box-shadow:0 30px 80px rgba(0,0,0,.4);overflow:hidden;}
     .login-brand{background:linear-gradient(135deg,#1a56b0,#1e3a8a);padding:30px 24px 22px;text-align:center;}
-    #loginBrandLogo{height:80px;border-radius:12px;object-fit:contain;display:none;margin:0 auto 12px;background:#fff;padding:6px;}
-    #loginBrandName{color:#fff;font-weight:800;font-size:21px;letter-spacing:.2px;}
+    #loginAgendoLogo{height:78px;border-radius:10px;object-fit:contain;display:block;margin:0 auto 8px;background:#fff;padding:5px;}
+    #loginBrandPara{color:rgba(255,255,255,.7);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:6px 0 8px;}
+    #loginBrandLogo{height:62px;border-radius:10px;object-fit:contain;display:none;margin:0 auto 8px;background:#fff;padding:5px;}
+    #loginBrandName{color:#fff;font-weight:800;font-size:19px;letter-spacing:.2px;}
     #loginBrandSub{color:rgba(255,255,255,.65);font-size:12px;margin-top:5px;}
     .login-tabs{display:flex;border-bottom:2px solid #f1f5f9;}
     .login-tab{flex:1;padding:11px 8px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:#94a3b8;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;}
@@ -44,6 +46,8 @@
     #userBadge .role-tag.admin{background:#fbbf24;color:#78350f;}
     #syncDot{width:7px;height:7px;border-radius:50%;background:#4ade80;display:inline-block;}
     #navBrand{display:flex;align-items:center;gap:8px;margin-right:20px;}
+    #navAgendoLogo{height:34px;border-radius:5px;object-fit:contain;background:#fff;padding:2px;display:block;}
+    #navBrandPara{color:rgba(255,255,255,.7);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 1px;}
     #navLogo{height:32px;border-radius:5px;display:none;object-fit:contain;}
     #navName{font-weight:800;font-size:15px;letter-spacing:.3px;white-space:nowrap;}
     .nav-icon-btn{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:6px;padding:5px 9px;cursor:pointer;font-size:15px;line-height:1;transition:background .12s;}
@@ -407,8 +411,10 @@
 <div id="loginScreen">
   <div class="login-card">
     <div class="login-brand">
+      <img id="loginAgendoLogo" src="agendo-logo.png" alt="AgendOrganizado">
+      <div id="loginBrandPara" style="display:none;">para:</div>
       <img id="loginBrandLogo" src="" alt="logo">
-      <div id="loginBrandName">AgendOrganizado</div>
+      <div id="loginBrandName" style="display:none;"></div>
       <div id="loginBrandSub">Plataforma multi-cliente · Agenda · Pacientes · IA · AAG</div>
     </div>
     <div class="login-tabs">
@@ -468,8 +474,10 @@
 <!-- TOP NAV -->
 <nav id="topNav">
   <div id="navBrand">
+    <img id="navAgendoLogo" src="agendo-logo.png" alt="AgendOrganizado">
+    <span id="navBrandPara" style="display:none;">para:</span>
     <img id="navLogo" src="" alt="logo">
-    <span id="navName">📋 AgendOrganizado</span>
+    <span id="navName"></span>
   </div>
   <div class="nav-aag-btn" id="aagNavBtn" onclick="openAAG()" title="AAG - Asistente Apoyo Gestión">
     <img src="aag-logo.png" alt="AAG">
@@ -1536,7 +1544,11 @@ function populateUserDropdown(){
 function updateLoginBrand(){
   const nameEl = document.getElementById('loginBrandName');
   const logoEl = document.getElementById('loginBrandLogo');
-  nameEl.textContent = clinicConfig.name || 'AgendOrganizado';
+  const paraEl = document.getElementById('loginBrandPara');
+  const hasClient = !!(clinicConfig.name || clinicConfig.logo);
+  if(paraEl) paraEl.style.display = hasClient ? 'block' : 'none';
+  if(clinicConfig.name){ nameEl.textContent = clinicConfig.name; nameEl.style.display='block'; }
+  else { nameEl.textContent=''; nameEl.style.display='none'; }
   if(clinicConfig.logo){ logoEl.src=clinicConfig.logo; logoEl.style.display='block'; }
   else { logoEl.style.display='none'; }
 }
@@ -2043,9 +2055,12 @@ function saveClinicConfig(){
 function updateNavBrand(){
   const nameEl = document.getElementById('navName');
   const logoEl = document.getElementById('navLogo');
+  const paraEl = document.getElementById('navBrandPara');
   const profEl = document.getElementById('profBadge');
-  if(clinicConfig.name) nameEl.textContent = clinicConfig.name;
-  else nameEl.textContent = '📋 AgendOrganizado';
+  const hasClient = !!(clinicConfig.name || clinicConfig.logo);
+  if(paraEl) paraEl.style.display = hasClient ? 'inline' : 'none';
+  if(clinicConfig.name){ nameEl.textContent = clinicConfig.name; nameEl.style.display='inline'; }
+  else { nameEl.textContent=''; nameEl.style.display='none'; }
   if(profEl){
     profEl.textContent = clinicConfig.name || 'AgendOrganizado · Plataforma multi-cliente';
   }
