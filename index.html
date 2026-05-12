@@ -227,6 +227,42 @@
     .danger-zone{background:#fff5f5;border:1px solid #fecaca;border-radius:9px;padding:14px;}
     .danger-zone h4{font-size:12px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;}
 
+    /* ── FINANZAS MENSUALES (bloques por mes) ── */
+    .fin-month{background:#fff;border:1px solid #e2e8f0;border-radius:12px;margin-bottom:18px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+    .fin-month-hd{background:linear-gradient(135deg,#1a56b0,#1e3a8a);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;}
+    .fin-month-hd .fmh-title{font-size:14px;font-weight:800;text-transform:capitalize;letter-spacing:.2px;}
+    .fin-month-hd .fmh-total{font-size:18px;font-weight:900;}
+    .fin-month-hd .fmh-sub{font-size:11px;opacity:.85;font-weight:600;}
+    .fin-days{padding:8px 14px;overflow-x:auto;}
+    .fin-days table{width:100%;border-collapse:collapse;min-width:520px;}
+    .fin-days th{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.4px;padding:8px 6px;text-align:left;border-bottom:1px solid #e2e8f0;white-space:nowrap;}
+    .fin-days th.r{text-align:right;}
+    .fin-days td{font-size:12px;color:#0f172a;padding:8px 6px;border-bottom:1px solid #f1f5f9;}
+    .fin-days td.r{text-align:right;font-variant-numeric:tabular-nums;}
+    .fin-days tr:last-child td{border-bottom:none;}
+    .fin-days tr:hover td{background:#f8fafc;}
+    .fin-day-date{font-weight:700;color:#1e3a8a;text-transform:capitalize;white-space:nowrap;}
+    .fin-day-date small{display:block;font-size:10px;color:#94a3b8;font-weight:500;}
+    .fin-vch-pill{display:inline-block;background:#dcfce7;color:#15803d;border-radius:99px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:4px;}
+    .fin-month-ft{background:#f8fafc;border-top:2px solid #e2e8f0;padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px 14px;}
+    .fmf-cell{font-size:11px;}
+    .fmf-cell .lbl{color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.3px;font-size:9px;}
+    .fmf-cell .val{font-weight:800;color:#0f172a;font-size:14px;margin-top:1px;}
+    .fmf-cell.daniel .val{color:#1d4ed8;}
+    .fmf-cell.mes .val{color:#7c3aed;}
+    .fmf-cell.abba .val{color:#be185d;}
+    .fmf-cell.vch .val{color:#15803d;}
+    .fmf-cell.tot .val{font-size:16px;color:#1e3a8a;}
+    .fin-empty{color:#94a3b8;font-size:13px;text-align:center;padding:24px 12px;font-style:italic;}
+    .fin-section-title{font-size:13px;font-weight:800;color:#374151;margin:18px 0 10px;display:flex;align-items:center;gap:6px;}
+    @media (max-width:560px){
+      .fin-month-hd .fmh-title{font-size:13px;}
+      .fin-month-hd .fmh-total{font-size:16px;}
+      .fin-days td{font-size:11px;padding:7px 4px;}
+      .fmf-cell .val{font-size:12px;}
+      .fmf-cell.tot .val{font-size:14px;}
+    }
+
     /* ── CARTERA CLIENTES (Propietario) ── */
     #cfgSectionCartera{padding:0;}
     .cart-gate{padding:24px 20px;}
@@ -3242,37 +3278,22 @@ function renderPatFinanzas(){
   let vchTotal=0;
   vchs.forEach(v=>{ const a=Number(v.monto)||0; vchTotal+=a; const sp=splitAmount(a, v.origin||'propio'); dan+=sp.daniel; clin+=sp.clinic; abba+=sp.doctor; });
   const grandTotal = total + vchTotal;
+  const brandName = getClinicBrand().name;
 
   document.getElementById('ppTab_finanzas').innerHTML=`
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
       <div class="stat-card"><div class="stat-lbl">Total citas</div><div class="stat-val">${visits.length}</div></div>
       <div class="stat-card"><div class="stat-lbl">Total pagado</div><div class="stat-val" style="font-size:18px;">${money(grandTotal)}</div></div>
-      <div class="stat-card"><div class="stat-lbl">Para Daniel</div><div class="stat-val" style="font-size:18px;color:#1d4ed8;">${money(dan)}</div></div>
+      <div class="stat-card"><div class="stat-lbl">${escH(brandName.length>18?brandName.slice(0,18)+'…':brandName)}</div><div class="stat-val" style="font-size:18px;color:#1d4ed8;">${money(dan)}</div></div>
       <div class="stat-card"><div class="stat-lbl">Para clínicas</div><div class="stat-val" style="font-size:18px;color:#7c3aed;">${money(clin+abba)}</div></div>
     </div>
-    ${vchs.length?`
-      <div class="pp-section-title">🧾 Vouchers ingresados (${vchs.length}) — ${money(vchTotal)}</div>
-      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
-        ${vchs.map(v=>{
-          const d = v.fecha?parseDateKey(v.fecha).toLocaleDateString('es-CL',{day:'2-digit',month:'short',year:'numeric'}):'—';
-          return `<div style="border-left:3px solid #16a34a;padding:8px 12px;border-radius:0 7px 7px 0;background:#f0fdf4;">
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-              <div style="min-width:0;flex:1;">
-                <div style="font-size:12px;font-weight:700;color:#0f172a;">${d} · ${escH(v.method||'pago')}${v.bank?' · '+escH(v.bank):''}</div>
-                ${v.refNum?`<div style="font-size:10px;color:#64748b;">Ref: ${escH(v.refNum)}</div>`:''}
-                ${v.notes?`<div style="font-size:10px;color:#94a3b8;font-style:italic;">${escH(v.notes)}</div>`:''}
-              </div>
-              <div style="text-align:right;flex-shrink:0;">
-                <div style="font-weight:800;color:#15803d;">${money(Number(v.monto)||0)}</div>
-                ${v.imageUrl?`<a href="${v.imageUrl}" target="_blank" style="font-size:10px;color:#1d4ed8;">Ver imagen</a>`:''}
-              </div>
-            </div>
-          </div>`;
-        }).join('')}
-      </div>
-    `:''}
-    <button type="button" onclick="closePatProfileModal();openVoucherModal('${p.id}')" class="btn-save" style="width:100%;background:#16a34a;margin-top:6px;">🧾 Ingresar voucher de pago</button>
-    ${(visits.length===0 && vchs.length===0)?'<p style="color:#94a3b8;font-size:13px;text-align:center;padding:24px 0;">Sin movimientos registrados.</p>':''}
+
+    ${(visits.length || vchs.length)?`
+      <div class="pp-section-title">📅 Cierre mensual del paciente — día por día</div>
+      ${buildMonthlyFinanceBlocks(visits, vchs, {showSplit:true})}
+    `:'<p style="color:#94a3b8;font-size:13px;text-align:center;padding:24px 0;">Sin movimientos registrados.</p>'}
+
+    <button type="button" onclick="closePatProfileModal();openVoucherModal('${p.id}')" class="btn-save" style="width:100%;background:#16a34a;margin-top:14px;">🧾 Ingresar voucher de pago</button>
   `;
 }
 
@@ -3375,41 +3396,150 @@ function renderPacientes(){
 }
 
 // ════ FINANCES VIEW ════
+// ════ HELPER: bloques mensuales de finanzas (reusable) ════
+// Recibe lista de "visits" (citas con amount+origin+dateKey) y "vouchers" (con monto+origin+fecha).
+// Devuelve HTML con un bloque por mes (más reciente arriba): cabecera, filas día a día y cierre con totales.
+// opts.showSplit = true (default) muestra columnas Daniel/MES/ABBA.
+// opts.maxMonths = límite opcional.
+function buildMonthlyFinanceBlocks(visits, vouchers, opts){
+  opts = opts || {};
+  const showSplit = opts.showSplit !== false;
+  // Acumular días: dateKey → {visitCount, visitGross, daniel, clinic, doctor, vchCount, vchGross, vchDaniel, vchClinic, vchDoctor}
+  const days = {};
+  function ensureDay(dk){
+    if(!days[dk]) days[dk] = {dateKey:dk, visitCount:0, visitGross:0, daniel:0, clinic:0, doctor:0, vchCount:0, vchGross:0};
+    return days[dk];
+  }
+  (visits||[]).forEach(v=>{
+    const dk = v.dateKey; if(!dk) return;
+    const amt = Number(v.amount)||0;
+    const name = (v.patient||'').trim();
+    if(!amt && !name) return; // slot vacío
+    const d = ensureDay(dk);
+    if(name) d.visitCount++;
+    d.visitGross += amt;
+    const sp = splitAmount(amt, v.origin||'propio');
+    d.daniel += sp.daniel; d.clinic += sp.clinic; d.doctor += sp.doctor;
+  });
+  (vouchers||[]).forEach(v=>{
+    const dk = v.fecha; if(!dk) return;
+    const amt = Number(v.monto)||0;
+    const d = ensureDay(dk);
+    d.vchCount++; d.vchGross += amt;
+    const sp = splitAmount(amt, v.origin||'propio');
+    d.daniel += sp.daniel; d.clinic += sp.clinic; d.doctor += sp.doctor;
+  });
+  // Agrupar por mes
+  const monthMap = {};
+  Object.values(days).forEach(d=>{
+    const mk = d.dateKey.slice(0,7);
+    if(!monthMap[mk]) monthMap[mk] = {monthKey:mk, days:[], visitCount:0, visitGross:0, vchCount:0, vchGross:0, daniel:0, clinic:0, doctor:0};
+    monthMap[mk].days.push(d);
+    monthMap[mk].visitCount += d.visitCount;
+    monthMap[mk].visitGross += d.visitGross;
+    monthMap[mk].vchCount += d.vchCount;
+    monthMap[mk].vchGross += d.vchGross;
+    monthMap[mk].daniel += d.daniel;
+    monthMap[mk].clinic += d.clinic;
+    monthMap[mk].doctor += d.doctor;
+  });
+  const months = Object.values(monthMap).sort((a,b)=>b.monthKey.localeCompare(a.monthKey));
+  if(opts.maxMonths) months.splice(opts.maxMonths);
+  if(!months.length) return '<div class="fin-empty">Sin movimientos registrados.</div>';
+
+  const brandName = getClinicBrand().name;
+  return months.map(M=>{
+    const [y,m] = M.monthKey.split('-');
+    const monthLabel = new Date(+y, +m-1, 1).toLocaleDateString('es-ES', {month:'long', year:'numeric'});
+    const monthTotal = M.visitGross + M.vchGross;
+    M.days.sort((a,b)=>a.dateKey.localeCompare(b.dateKey));
+    const daysHTML = M.days.map(d=>{
+      const date = parseDateKey(d.dateKey);
+      const dayN = date.toLocaleDateString('es-ES', {day:'2-digit'});
+      const dayName = date.toLocaleDateString('es-ES', {weekday:'short'}).replace('.','');
+      const dayTotal = d.visitGross + d.vchGross;
+      const countCell = d.visitCount + (d.vchCount?`<span class="fin-vch-pill">🧾 ${d.vchCount}</span>`:'');
+      return `<tr>
+        <td class="fin-day-date">${dayN} <small>${dayName}</small></td>
+        <td>${countCell || '—'}</td>
+        <td class="r">${money(dayTotal)}</td>
+        ${showSplit?`
+          <td class="r" style="color:#1d4ed8;">${money(d.daniel)}</td>
+          <td class="r" style="color:#7c3aed;">${money(d.clinic)}</td>
+          <td class="r" style="color:#be185d;">${money(d.doctor)}</td>
+        `:''}
+      </tr>`;
+    }).join('');
+    return `
+      <div class="fin-month">
+        <div class="fin-month-hd">
+          <div>
+            <div class="fmh-title">${monthLabel}</div>
+            <div class="fmh-sub">${M.visitCount} atenciones${M.vchCount?' · '+M.vchCount+' voucher(s)':''} · ${M.days.length} día(s) con movimiento</div>
+          </div>
+          <div class="fmh-total">${money(monthTotal)}</div>
+        </div>
+        <div class="fin-days">
+          <table>
+            <thead><tr>
+              <th>Día</th>
+              <th>Atenciones</th>
+              <th class="r">Bruto</th>
+              ${showSplit?`<th class="r">${escH(brandName.length>22?brandName.slice(0,22)+'…':brandName)}</th><th class="r">MES</th><th class="r">ABBA</th>`:''}
+            </tr></thead>
+            <tbody>${daysHTML}</tbody>
+          </table>
+        </div>
+        <div class="fin-month-ft">
+          <div class="fmf-cell"><div class="lbl">Atenciones</div><div class="val">${M.visitCount}</div></div>
+          <div class="fmf-cell vch"><div class="lbl">Vouchers</div><div class="val">${M.vchCount} · ${money(M.vchGross)}</div></div>
+          <div class="fmf-cell tot"><div class="lbl">Total mes</div><div class="val">${money(monthTotal)}</div></div>
+          ${showSplit?`
+            <div class="fmf-cell daniel"><div class="lbl">${escH(brandName.length>18?brandName.slice(0,18)+'…':brandName)}</div><div class="val">${money(M.daniel)}</div></div>
+            <div class="fmf-cell mes"><div class="lbl">Clínica MES</div><div class="val">${money(M.clinic)}</div></div>
+            <div class="fmf-cell abba"><div class="lbl">Clínica ABBA</div><div class="val">${money(M.doctor)}</div></div>
+          `:''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Recolecta TODAS las citas planas como visits[] para el helper.
+function getAllVisitsFlat(){
+  const out = [];
+  Object.entries(state.appointments).forEach(([dk, day])=>{
+    HOURS.forEach(h=>{
+      allBoxKeys(h).forEach(k=>{
+        const s = day[k] || {};
+        const name = (s.patient||'').trim();
+        const amt = Number(s.amount)||0;
+        if(!name && !amt) return;
+        out.push({dateKey:dk, hour:h, slotKey:k, ...s});
+      });
+    });
+  });
+  return out;
+}
+
 function renderFinanzas(){
   const fin=document.getElementById('finContent'); if(!fin) return;
   const all=getAllStats();
   const vchAll=getAllVoucherStats();
-  const monthStats={};
-  Object.keys(state.appointments).forEach(dk=>{
-    const [y,m]=dk.split('-'); const key=`${y}-${m}`;
-    if(!monthStats[key]) monthStats[key]={gross:0,count:0,daniel:0,vchGross:0,vchCount:0};
-    const s=getDayStats(dk); monthStats[key].gross+=s.gross; monthStats[key].count+=s.count; monthStats[key].daniel+=s.daniel;
-  });
-  const vchMonths = getVoucherStatsByMonth();
-  Object.entries(vchMonths).forEach(([key,v])=>{
-    if(!monthStats[key]) monthStats[key]={gross:0,count:0,daniel:0,vchGross:0,vchCount:0};
-    monthStats[key].vchGross = v.gross;
-    monthStats[key].vchCount = v.count;
-    monthStats[key].daniel += v.daniel;
-  });
-  const months=Object.keys(monthStats).sort().reverse().slice(0,12);
-
   const grandGross = all.gross + vchAll.gross;
   const grandDaniel = all.daniel + vchAll.daniel;
   const grandClinic = all.clinic + vchAll.clinic;
   const grandDoctor = all.doctor + vchAll.doctor;
-
-  // Recent vouchers list
-  const recentVouchers = Object.values(voucherPaymentsDB)
-    .sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''))
-    .slice(0,8);
+  const visits = getAllVisitsFlat();
+  const vouchers = Object.values(voucherPaymentsDB);
+  const brandName = getClinicBrand().name;
 
   fin.innerHTML=`
     <h2 style="font-size:18px;font-weight:800;color:#1e3a8a;margin-bottom:16px">Finanzas</h2>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px;">
       <div class="stat-card"><div class="stat-lbl">Atenciones totales</div><div class="stat-val">${all.count}</div></div>
       <div class="stat-card"><div class="stat-lbl">Total facturado</div><div class="stat-val" style="font-size:20px">${money(grandGross)}</div></div>
-      <div class="stat-card"><div class="stat-lbl">${escH(getClinicBrand().name)}</div><div class="stat-val" style="font-size:20px;color:#1d4ed8">${money(grandDaniel)}</div></div>
+      <div class="stat-card"><div class="stat-lbl">${escH(brandName)}</div><div class="stat-val" style="font-size:20px;color:#1d4ed8">${money(grandDaniel)}</div></div>
       <div class="stat-card"><div class="stat-lbl">Clínica MES</div><div class="stat-val" style="font-size:20px;color:#7c3aed">${money(grandClinic)}</div></div>
       <div class="stat-card"><div class="stat-lbl">Clínica ABBA</div><div class="stat-val" style="font-size:20px;color:#be185d">${money(grandDoctor)}</div></div>
     </div>
@@ -3418,43 +3548,8 @@ function renderFinanzas(){
       <div class="stat-card" style="background:#f0fdf4;border-color:#86efac;"><div class="stat-lbl" style="color:#15803d;">🧾 Vouchers ingresados</div><div class="stat-val" style="font-size:18px;color:#16a34a;">${money(vchAll.gross)}</div><div style="font-size:11px;color:#64748b;">${vchAll.count} voucher(s)</div></div>
     </div>
 
-    <h3 style="font-size:14px;font-weight:700;color:#374151;margin-bottom:10px">Por mes</h3>
-    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:24px;">
-      ${months.map(k=>{
-        const [y,m]=k.split('-'); const label=new Date(+y,+m-1,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'});
-        const s=monthStats[k];
-        const monthTotal = s.gross + s.vchGross;
-        return `<div class="stat-card" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;">
-          <div>
-            <div style="font-weight:700;font-size:13px;color:#0f172a;text-transform:capitalize">${label}</div>
-            <div style="font-size:12px;color:#64748b">${s.count} atenciones${s.vchCount?' · '+s.vchCount+' voucher(s)':''}</div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-weight:800;font-size:15px;color:#1d4ed8">${money(monthTotal)}</div>
-            <div style="font-size:11px;color:#64748b">Daniel: ${money(s.daniel)}${s.vchGross?' · 🧾 '+money(s.vchGross):''}</div>
-          </div>
-        </div>`;
-      }).join('')||'<div style="color:#94a3b8;font-size:13px">Sin datos.</div>'}
-    </div>
-
-    ${recentVouchers.length?`
-      <h3 style="font-size:14px;font-weight:700;color:#374151;margin-bottom:10px">🧾 Vouchers recientes</h3>
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        ${recentVouchers.map(v=>{
-          const d = v.fecha?parseDateKey(v.fecha).toLocaleDateString('es-CL',{day:'2-digit',month:'short',year:'2-digit'}):'—';
-          return `<div class="stat-card" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;">
-            <div style="min-width:0;flex:1;">
-              <div style="font-weight:700;font-size:13px;color:#0f172a;">${escH(v.patientName||'—')}</div>
-              <div style="font-size:11px;color:#64748b;">${d} · ${escH(v.method||'pago')}${v.bank?' · '+escH(v.bank):''}${v.refNum?' · Ref '+escH(v.refNum):''}</div>
-            </div>
-            <div style="text-align:right;flex-shrink:0;">
-              <div style="font-weight:800;color:#15803d;">${money(Number(v.monto)||0)}</div>
-              ${v.imageUrl?`<a href="${v.imageUrl}" target="_blank" style="font-size:10px;color:#1d4ed8;">Ver imagen</a>`:''}
-            </div>
-          </div>`;
-        }).join('')}
-      </div>
-    `:''}
+    <div class="fin-section-title">📅 Cierre mensual — día por día</div>
+    ${buildMonthlyFinanceBlocks(visits, vouchers, {showSplit:true, maxMonths:24})}
   `;
 }
 
