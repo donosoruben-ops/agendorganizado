@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "daniel-marrero-cosm"
+    "default": "agendorganizado",
+    "legacy": "daniel-marrero-cosm"
   }
 }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agenda — Daniel Marrero Cosmetólogo</title>
+  <title>AgendOrganizado — Plataforma de Agenda Multi-Cliente</title>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -198,9 +198,10 @@
     .spin{animation:spin .7s linear infinite;display:inline-block;width:16px;height:16px;border:2px solid #bfdbfe;border-top-color:var(--blue);border-radius:50%;}
 
     /* ── CONFIG MODAL ── */
-    #cfgModal .modal-box{max-width:460px;max-height:90vh;overflow-y:auto;}
-    .cfg-tabs{display:flex;border-bottom:2px solid #f1f5f9;background:#f8fafc;}
-    .cfg-tab{flex:1;padding:10px 8px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:#94a3b8;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .14s;}
+    #cfgModal .modal-box{max-width:520px;max-height:90vh;overflow-y:auto;}
+    .cfg-tabs{display:flex;border-bottom:2px solid #f1f5f9;background:#f8fafc;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+    .cfg-tabs::-webkit-scrollbar{display:none;}
+    .cfg-tab{flex:1;min-width:84px;padding:10px 8px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:#94a3b8;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .14s;white-space:nowrap;}
     .cfg-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
     .cfg-section{padding:18px;display:flex;flex-direction:column;gap:14px;}
     #logoPreview{width:100%;max-height:200px;object-fit:contain;border-radius:10px;border:1px solid #e2e8f0;background:#f8fafc;display:none;margin-top:8px;}
@@ -225,6 +226,64 @@
     .section-divider{border:none;border-top:1px solid #e2e8f0;margin:4px 0;}
     .danger-zone{background:#fff5f5;border:1px solid #fecaca;border-radius:9px;padding:14px;}
     .danger-zone h4{font-size:12px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;}
+
+    /* ── CARTERA CLIENTES (Propietario) ── */
+    #cfgSectionCartera{padding:0;}
+    .cart-gate{padding:24px 20px;}
+    .cart-gate-lock{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:14px 0 20px;color:#475569;}
+    .cart-gate-lock .lk-icon{font-size:42px;}
+    .cart-gate-lock h4{font-size:14px;font-weight:800;color:#0f172a;}
+    .cart-gate-lock p{font-size:12px;color:#64748b;max-width:340px;line-height:1.5;}
+    .cart-gate input{margin-top:6px;}
+    .cart-gate .err{background:#fee2e2;color:#dc2626;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;margin-top:10px;display:none;}
+    .cart-pane{padding:16px 14px;max-height:62vh;overflow-y:auto;}
+    .cart-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #e2e8f0;}
+    .cart-header h4{font-size:13px;font-weight:800;color:#1a56b0;letter-spacing:.2px;}
+    .cart-header .cart-count{font-size:11px;color:#64748b;background:#f1f5f9;padding:2px 8px;border-radius:99px;font-weight:700;}
+    .cart-add-btn{background:linear-gradient(135deg,#1a56b0,#1e3a8a);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:11px;font-weight:700;cursor:pointer;}
+    .cart-list{display:flex;flex-direction:column;gap:10px;}
+    .cart-card{background:#fff;border:1px solid #e2e8f0;border-radius:11px;padding:12px;box-shadow:0 1px 2px rgba(0,0,0,.03);}
+    .cart-card-hd{display:flex;align-items:center;gap:9px;margin-bottom:10px;}
+    .cart-card-logo{width:38px;height:38px;border-radius:7px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;border:1px solid #e2e8f0;}
+    .cart-card-logo img{max-width:100%;max-height:100%;object-fit:contain;}
+    .cart-card-logo span{font-size:18px;color:#94a3b8;}
+    .cart-card-info{flex:1;min-width:0;}
+    .cart-card-name{font-size:13px;font-weight:800;color:#0f172a;line-height:1.2;}
+    .cart-card-sub{font-size:10px;color:#64748b;margin-top:2px;}
+    .cart-card-actions{display:flex;gap:4px;}
+    .cart-icon-btn{background:#f1f5f9;border:none;border-radius:6px;padding:5px 7px;cursor:pointer;font-size:12px;color:#475569;transition:background .12s;}
+    .cart-icon-btn:hover{background:#e2e8f0;}
+    .cart-icon-btn.del{color:#dc2626;}
+    .cart-icon-btn.del:hover{background:#fee2e2;}
+    .cart-row{display:grid;grid-template-columns:90px 1fr;gap:6px 10px;align-items:center;font-size:11px;margin-top:6px;}
+    .cart-row label{color:#64748b;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.3px;}
+    .cart-row input,.cart-row select{border:1px solid #cbd5e1;border-radius:6px;padding:5px 8px;font-size:12px;width:100%;outline:none;}
+    .cart-row input:focus,.cart-row select:focus{border-color:#1a56b0;}
+    .cart-key-bar{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;}
+    .cart-key-bar button{flex:1;min-width:80px;border:none;border-radius:6px;padding:6px 8px;font-size:10px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:3px;transition:opacity .12s;}
+    .cart-key-bar .b-save{background:#16a34a;color:#fff;}
+    .cart-key-bar .b-del{background:#fee2e2;color:#dc2626;}
+    .cart-key-bar .b-test{background:#0ea5e9;color:#fff;}
+    .cart-key-bar button:hover{opacity:.88;}
+    .cart-aag-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #f59e0b;border-radius:8px;padding:8px 11px;}
+    .cart-aag-row.on{background:linear-gradient(135deg,#dcfce7,#bbf7d0);border-color:#16a34a;}
+    .cart-aag-row .lbl{font-size:11px;font-weight:800;color:#7c2d12;line-height:1.25;}
+    .cart-aag-row.on .lbl{color:#14532d;}
+    .cart-aag-row .lbl small{display:block;font-weight:600;font-size:10px;opacity:.85;margin-top:1px;}
+    .cart-switch{position:relative;width:38px;height:22px;background:#cbd5e1;border-radius:99px;cursor:pointer;transition:background .15s;flex-shrink:0;}
+    .cart-switch.on{background:#16a34a;}
+    .cart-switch::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+    .cart-switch.on::after{left:18px;}
+    .cart-card-notes{margin-top:8px;}
+    .cart-card-notes textarea{width:100%;border:1px solid #cbd5e1;border-radius:6px;padding:6px 8px;font-size:11px;resize:vertical;min-height:34px;font-family:inherit;outline:none;}
+    .cart-status{font-size:10px;font-weight:700;margin-top:4px;min-height:14px;}
+    .cart-status.ok{color:#16a34a;}
+    .cart-status.err{color:#dc2626;}
+    .cart-status.busy{color:#1d4ed8;}
+    .cart-empty{text-align:center;padding:24px 12px;color:#94a3b8;font-size:12px;font-style:italic;}
+    .cart-footer{padding:10px 14px;border-top:1px solid #e2e8f0;background:#f8fafc;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+    .cart-footer .lock-btn{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;border-radius:7px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;}
+    .cart-footer .lock-btn:hover{background:#e2e8f0;}
 
     /* ── PATIENT PROFILE MODAL ── */
     .pp-tabs{display:flex;border-bottom:2px solid #f1f5f9;background:#f8fafc;}
@@ -313,8 +372,8 @@
   <div class="login-card">
     <div class="login-brand">
       <img id="loginBrandLogo" src="" alt="logo">
-      <div id="loginBrandName">Daniel Marrero Cosmetólogo</div>
-      <div id="loginBrandSub">Sistema de Agenda Clínica</div>
+      <div id="loginBrandName">AgendOrganizado</div>
+      <div id="loginBrandSub">Plataforma multi-cliente · Agenda · Pacientes · IA · AAG</div>
     </div>
     <div class="login-tabs">
       <div class="login-tab active" id="ltAdmin" onclick="switchLoginTab('admin')">🔐 Administrador</div>
@@ -374,7 +433,7 @@
 <nav id="topNav">
   <div id="navBrand">
     <img id="navLogo" src="" alt="logo">
-    <span id="navName">💆 Daniel Marrero</span>
+    <span id="navName">📋 AgendOrganizado</span>
   </div>
   <div class="nav-aag-btn" id="aagNavBtn" onclick="openAAG()" title="AAG - Asistente Apoyo Gestión">
     <img src="aag-logo.png" alt="AAG">
@@ -417,7 +476,7 @@
     <option value="4">Box 4</option>
   </select>
   <div style="flex:1"></div>
-  <span id="profBadge">Daniel Marrero · Cosmetólogo</span>
+  <span id="profBadge"></span>
 </div>
 
 <!-- VIEWS -->
@@ -556,12 +615,13 @@
       <div class="cfg-tab" id="cfgTabUsuarios" onclick="switchCfgTab('usuarios')">👥 Usuarios</div>
       <div class="cfg-tab" id="cfgTabBoxes" onclick="switchCfgTab('boxes')">📦 Boxes</div>
       <div class="cfg-tab" id="cfgTabServicios" onclick="switchCfgTab('servicios')">💈 Servicios</div>
+      <div class="cfg-tab" id="cfgTabCartera" onclick="switchCfgTab('cartera')">🏢 Cartera</div>
     </div>
     <!-- Tab: Clínica -->
     <div id="cfgSectionClinica" class="cfg-section">
       <div class="field-group">
         <label>Nombre de la clínica / profesional</label>
-        <input id="cfgName" class="fi" type="text" placeholder="Ej: Cosmetología Daniel Marrero">
+        <input id="cfgName" class="fi" type="text" placeholder="Ej: Cosmetología Avanzada / Clínica Dental...">
         <span class="cfg-hint">Aparece en el encabezado, presupuestos, recetas y correos.</span>
       </div>
       <div class="field-group">
@@ -646,6 +706,80 @@
         <button type="button" class="btn-cancel" onclick="closeCfgModal()">Cancelar</button>
         <button type="button" class="btn-save" onclick="saveServiciosCfg()">Guardar precios</button>
       </div>
+    </div>
+    <!-- Tab: Cartera Clientes (Propietario) -->
+    <div id="cfgSectionCartera" class="cfg-section hidden" style="padding:0;">
+      <!-- Gate: master password (set first time / unlock) -->
+      <div id="cartGate" class="cart-gate">
+        <div class="cart-gate-lock">
+          <div class="lk-icon">🔐</div>
+          <h4 id="cartGateTitle">Cartera de Clientes — Acceso Propietario</h4>
+          <p id="cartGateMsg">Ingresa la contraseña maestra para gestionar tus clientes, sus llaves de IA y el servicio AAG.</p>
+        </div>
+        <div class="field-group">
+          <label id="cartGateLbl">Contraseña maestra</label>
+          <input id="cartGatePass" class="fi" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter') cartGateSubmit()">
+        </div>
+        <div id="cartGateConfirmWrap" class="field-group hidden">
+          <label>Repite la contraseña</label>
+          <input id="cartGatePassConf" class="fi" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter') cartGateSubmit()">
+        </div>
+        <div class="err" id="cartGateErr"></div>
+        <div class="modal-ft" style="padding:0;border:none;margin-top:12px;">
+          <button type="button" class="btn-cancel" onclick="closeCfgModal()">Cancelar</button>
+          <button type="button" class="btn-save" id="cartGateBtn" onclick="cartGateSubmit()">Desbloquear</button>
+        </div>
+        <div style="font-size:11px;color:#94a3b8;text-align:center;margin-top:10px;">
+          ¿Olvidaste tu contraseña? <a href="#" onclick="cartGateReset();return false;" style="color:#1a56b0;font-weight:700;text-decoration:none;">Reiniciar</a>
+        </div>
+      </div>
+      <!-- Pane: clients list -->
+      <div id="cartPane" class="cart-pane hidden">
+        <div class="cart-header">
+          <div>
+            <h4>🏢 Mis Clientes <span class="cart-count" id="cartCount">0</span></h4>
+            <div style="font-size:10px;color:#64748b;margin-top:2px;">Plataforma AgendOrganizado · Propietario</div>
+          </div>
+          <button type="button" class="cart-add-btn" onclick="cartAddClient()">+ Nuevo Cliente</button>
+        </div>
+        <div id="cartList" class="cart-list"></div>
+        <div id="cartEmpty" class="cart-empty hidden">Aún no agregas clientes. Toca "+ Nuevo Cliente" para empezar.</div>
+      </div>
+      <div id="cartFooter" class="cart-footer hidden">
+        <button type="button" class="lock-btn" onclick="cartLock()">🔒 Bloquear cartera</button>
+        <button type="button" class="lock-btn" onclick="openMigratePanel()" style="background:#fef3c7;color:#92400e;border-color:#f59e0b;">📦 Migrar legacy</button>
+        <button type="button" class="btn-cancel" onclick="closeCfgModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MIGRATION MODAL (Legacy → Nuevo proyecto) ══ -->
+<div id="migrateModal" class="modal-bg hidden">
+  <div class="modal-box" style="max-width:560px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;">
+    <div class="modal-hd">
+      <h3>📦 Migrar desde proyecto legacy</h3>
+      <button type="button" onclick="closeMigratePanel()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:16px;">✕</button>
+    </div>
+    <div style="padding:16px;overflow-y:auto;flex:1;">
+      <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:9px;padding:11px 14px;margin-bottom:12px;font-size:12px;color:#92400e;line-height:1.5;">
+        <strong>⚠ Solo úsalo una vez.</strong> Copia todos los datos de <code>daniel-marrero-cosm</code> (clínica original) al proyecto actual <code>agendorganizado</code>. Si vuelves a ejecutarlo sobreescribe los registros con el mismo ID.
+      </div>
+      <div style="font-size:12px;color:#475569;margin-bottom:10px;line-height:1.5;">
+        Se copiarán las colecciones: <strong>_config, schedule, patients, presupuestos, voucherPayments, consentTemplates, consentRequests</strong>.
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#0f172a;margin-bottom:14px;cursor:pointer;">
+        <input type="checkbox" id="migrateIncludeStorage" checked>
+        Incluir archivos de Storage (vouchers + plantillas de consentimientos)
+      </label>
+      <button type="button" id="migrateBtn" onclick="migrateFromLegacy({includeStorage: document.getElementById('migrateIncludeStorage').checked})" style="width:100%;background:linear-gradient(135deg,#1a56b0,#1e3a8a);color:#fff;border:none;border-radius:9px;padding:11px;font-size:13px;font-weight:800;cursor:pointer;margin-bottom:14px;">
+        ▶ Iniciar migración
+      </button>
+      <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">Log de migración</div>
+      <div id="migrateLog" style="background:#0f172a;color:#e2e8f0;border-radius:7px;padding:10px 12px;font-family:Consolas,monospace;font-size:11px;max-height:280px;overflow-y:auto;min-height:120px;"></div>
+    </div>
+    <div class="modal-ft" style="flex-shrink:0;">
+      <button type="button" class="btn-cancel" onclick="closeMigratePanel()">Cerrar</button>
     </div>
   </div>
 </div>
@@ -1085,6 +1219,17 @@
 // Ver instrucciones en: https://console.firebase.google.com
 // ════════════════════════════════════════════════════════════
 const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyCJnWDqQpDZTA4LHLgiWp7ouRny1vPbPYY",
+  authDomain:        "agendorganizado.firebaseapp.com",
+  projectId:         "agendorganizado",
+  storageBucket:     "agendorganizado.firebasestorage.app",
+  messagingSenderId: "720407732051",
+  appId:             "1:720407732051:web:7eb93d7c3832063f5e4ba6"
+};
+
+// Proyecto legacy — sólo para migración desde Daniel Marrero original.
+// Una vez completada la migración, este bloque puede eliminarse.
+const FIREBASE_CONFIG_LEGACY = {
   apiKey:            "AIzaSyDzlLwZzjseOjMx8VNhCUFQGM11xZFk6YA",
   authDomain:        "daniel-marrero-cosm.firebaseapp.com",
   projectId:         "daniel-marrero-cosm",
@@ -1397,7 +1542,7 @@ function populateUserDropdown(){
 function updateLoginBrand(){
   const nameEl = document.getElementById('loginBrandName');
   const logoEl = document.getElementById('loginBrandLogo');
-  nameEl.textContent = clinicConfig.name || 'Daniel Marrero Cosmetólogo';
+  nameEl.textContent = clinicConfig.name || 'AgendOrganizado';
   if(clinicConfig.logo){ logoEl.src=clinicConfig.logo; logoEl.style.display='block'; }
   else { logoEl.style.display='none'; }
 }
@@ -1505,6 +1650,516 @@ function openAAG(){
   window.open('/aag', '_blank');
 }
 
+// ════ CARTERA CLIENTES (Propietario) ════
+const CART_LS_KEY = 'agendOrgCartera';
+const CART_PASS_LS_KEY = 'agendOrgCarteraPass';
+const CART_UNLOCK_LS_KEY = 'agendOrgCarteraUnlocked';
+const AI_PROVIDERS = [
+  {id:'claude', label:'Claude (Anthropic)'},
+  {id:'openai', label:'OpenAI (GPT)'},
+  {id:'gemini', label:'Gemini (Google)'}
+];
+const AAG_COST_NOTE = '+ $29 USD/mes (WhatsApp WAHA/Whapi)';
+let carteraClients = [];
+let cartPassHash = '';
+let cartUnlocked = false;
+
+async function sha256Hex(str){
+  try{
+    const buf = new TextEncoder().encode(str);
+    const dig = await crypto.subtle.digest('SHA-256', buf);
+    return Array.from(new Uint8Array(dig)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }catch(e){ return 'fallback:'+str; }
+}
+
+function loadCarteraLocal(){
+  try{
+    const raw = localStorage.getItem(CART_LS_KEY);
+    if(raw) carteraClients = JSON.parse(raw) || [];
+  }catch(e){ carteraClients = []; }
+  try{
+    cartPassHash = localStorage.getItem(CART_PASS_LS_KEY) || '';
+    cartUnlocked = sessionStorage.getItem(CART_UNLOCK_LS_KEY) === '1';
+  }catch(e){}
+  ensureCarteraSeed();
+}
+
+function ensureCarteraSeed(){
+  if(carteraClients.length === 0){
+    carteraClients = [{
+      id: 'cli_'+Date.now().toString(36),
+      name: 'Daniel Marrero Cosmetología Avanzada',
+      logo: '',
+      contactEmail: '',
+      contactWhatsapp: '',
+      aiProvider: 'claude',
+      apiKey: '',
+      apiKeySaved: false,
+      aagActive: true,
+      notes: 'Cliente activo · Cosmetología',
+      status: '',
+      lastTest: ''
+    }];
+    saveCarteraLocal();
+  }
+}
+
+function saveCarteraLocal(){
+  try{ localStorage.setItem(CART_LS_KEY, JSON.stringify(carteraClients)); }catch(e){}
+}
+
+async function saveCarteraRemote(){
+  if(!db) return;
+  try{
+    await ensureAuth();
+    await db.collection('_config').doc('cartera').set({
+      clients: carteraClients,
+      passHash: cartPassHash,
+      updated: Date.now()
+    });
+  }catch(e){ console.warn('Cartera remote save:', e); }
+}
+
+function loadCarteraFromRemote(d){
+  if(!d) return;
+  if(Array.isArray(d.clients)) carteraClients = d.clients;
+  if(d.passHash) cartPassHash = d.passHash;
+  try{
+    localStorage.setItem(CART_LS_KEY, JSON.stringify(carteraClients));
+    if(cartPassHash) localStorage.setItem(CART_PASS_LS_KEY, cartPassHash);
+  }catch(e){}
+  if(cfgTab === 'cartera') cartShow();
+}
+
+function cartShow(){
+  const gate = document.getElementById('cartGate');
+  const pane = document.getElementById('cartPane');
+  const footer = document.getElementById('cartFooter');
+  const gateTitle = document.getElementById('cartGateTitle');
+  const gateMsg = document.getElementById('cartGateMsg');
+  const gateLbl = document.getElementById('cartGateLbl');
+  const gateBtn = document.getElementById('cartGateBtn');
+  const confirmWrap = document.getElementById('cartGateConfirmWrap');
+  const err = document.getElementById('cartGateErr');
+  err.style.display = 'none';
+  document.getElementById('cartGatePass').value = '';
+  document.getElementById('cartGatePassConf').value = '';
+  if(cartUnlocked){
+    gate.classList.add('hidden');
+    pane.classList.remove('hidden');
+    footer.classList.remove('hidden');
+    renderCartera();
+    return;
+  }
+  pane.classList.add('hidden');
+  footer.classList.add('hidden');
+  gate.classList.remove('hidden');
+  if(!cartPassHash){
+    gateTitle.textContent = 'Configura tu contraseña maestra';
+    gateMsg.textContent = 'Esta es la primera vez. Define una contraseña que solo tú conozcas — protege el listado de tus clientes y sus llaves de IA.';
+    gateLbl.textContent = 'Nueva contraseña maestra';
+    gateBtn.textContent = 'Crear contraseña';
+    confirmWrap.classList.remove('hidden');
+  } else {
+    gateTitle.textContent = 'Cartera de Clientes — Acceso Propietario';
+    gateMsg.textContent = 'Ingresa la contraseña maestra para gestionar tus clientes, sus llaves de IA y el servicio AAG.';
+    gateLbl.textContent = 'Contraseña maestra';
+    gateBtn.textContent = 'Desbloquear';
+    confirmWrap.classList.add('hidden');
+  }
+  setTimeout(()=>document.getElementById('cartGatePass').focus(), 80);
+}
+
+async function cartGateSubmit(){
+  const err = document.getElementById('cartGateErr');
+  const p1 = document.getElementById('cartGatePass').value;
+  err.style.display = 'none';
+  if(!cartPassHash){
+    const p2 = document.getElementById('cartGatePassConf').value;
+    if(p1.length < 4){ err.textContent='La contraseña debe tener mínimo 4 caracteres.'; err.style.display='block'; return; }
+    if(p1 !== p2){ err.textContent='Las contraseñas no coinciden.'; err.style.display='block'; return; }
+    cartPassHash = await sha256Hex(p1);
+    try{ localStorage.setItem(CART_PASS_LS_KEY, cartPassHash); }catch(e){}
+    saveCarteraRemote();
+  } else {
+    const h = await sha256Hex(p1);
+    if(h !== cartPassHash){ err.textContent='Contraseña incorrecta.'; err.style.display='block'; return; }
+  }
+  cartUnlocked = true;
+  try{ sessionStorage.setItem(CART_UNLOCK_LS_KEY, '1'); }catch(e){}
+  cartShow();
+}
+
+function cartLock(){
+  cartUnlocked = false;
+  try{ sessionStorage.removeItem(CART_UNLOCK_LS_KEY); }catch(e){}
+  cartShow();
+}
+
+function cartGateReset(){
+  if(!confirm('¿Reiniciar la contraseña maestra de la cartera? Esto NO borra tus clientes, solo te permitirá definir una nueva contraseña.')) return;
+  cartPassHash = '';
+  cartUnlocked = false;
+  try{
+    localStorage.removeItem(CART_PASS_LS_KEY);
+    sessionStorage.removeItem(CART_UNLOCK_LS_KEY);
+  }catch(e){}
+  saveCarteraRemote();
+  cartShow();
+}
+
+function cartAddClient(){
+  const id = 'cli_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  carteraClients.push({
+    id, name:'Nuevo cliente', logo:'', contactEmail:'', contactWhatsapp:'',
+    aiProvider:'claude', apiKey:'', apiKeySaved:false, aagActive:false,
+    notes:'', status:'', lastTest:''
+  });
+  saveCarteraLocal();
+  saveCarteraRemote();
+  renderCartera();
+  setTimeout(()=>{
+    const el = document.querySelector(`[data-cart-id="${id}"] .cart-name-input`);
+    if(el){ el.focus(); el.select(); }
+  }, 50);
+}
+
+function cartDeleteClient(id){
+  const c = carteraClients.find(x=>x.id===id);
+  if(!c) return;
+  if(!confirm(`¿Eliminar al cliente "${c.name}"? Esta acción es definitiva.`)) return;
+  carteraClients = carteraClients.filter(x=>x.id!==id);
+  saveCarteraLocal();
+  saveCarteraRemote();
+  renderCartera();
+}
+
+function cartUpdateField(id, field, value){
+  const c = carteraClients.find(x=>x.id===id);
+  if(!c) return;
+  c[field] = value;
+  saveCarteraLocal();
+  clearTimeout(cartUpdateField._t);
+  cartUpdateField._t = setTimeout(()=>saveCarteraRemote(), 600);
+}
+
+function cartUploadLogo(id, fileInput){
+  const file = fileInput.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    const img = new Image();
+    img.onload = function(){
+      const MAX=300, canvas=document.createElement('canvas');
+      let w=img.width, h=img.height;
+      if(w>MAX||h>MAX){ if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;} }
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      const data = canvas.toDataURL('image/jpeg',0.75);
+      cartUpdateField(id, 'logo', data);
+      renderCartera();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function cartSaveApiKey(id){
+  const c = carteraClients.find(x=>x.id===id); if(!c) return;
+  const el = document.querySelector(`[data-cart-id="${id}"] .cart-key-input`);
+  if(!el) return;
+  const k = el.value.trim();
+  if(!k){ cartSetStatus(id, 'err', 'Escribe una API Key antes de guardar.'); return; }
+  c.apiKey = k;
+  c.apiKeySaved = true;
+  saveCarteraLocal();
+  saveCarteraRemote();
+  cartSetStatus(id, 'ok', '💾 Guardada localmente.');
+}
+
+function cartDeleteApiKey(id){
+  const c = carteraClients.find(x=>x.id===id); if(!c) return;
+  if(!confirm('¿Borrar la API Key guardada para este cliente?')) return;
+  c.apiKey = '';
+  c.apiKeySaved = false;
+  c.lastTest = '';
+  saveCarteraLocal();
+  saveCarteraRemote();
+  renderCartera();
+}
+
+function cartSetStatus(id, kind, msg){
+  const el = document.querySelector(`[data-cart-id="${id}"] .cart-status`);
+  if(!el) return;
+  el.className = 'cart-status '+(kind||'');
+  el.textContent = msg || '';
+}
+
+async function cartTestApi(id){
+  const c = carteraClients.find(x=>x.id===id); if(!c) return;
+  const el = document.querySelector(`[data-cart-id="${id}"] .cart-key-input`);
+  const key = (el && el.value.trim()) || c.apiKey;
+  if(!key){ cartSetStatus(id, 'err', 'Falta API Key.'); return; }
+  cartSetStatus(id, 'busy', '🔌 Probando conexión...');
+  try{
+    let ok = false, info = '';
+    if(c.aiProvider === 'claude'){
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{
+          'content-type':'application/json',
+          'x-api-key': key,
+          'anthropic-version':'2023-06-01',
+          'anthropic-dangerous-direct-browser-access':'true'
+        },
+        body: JSON.stringify({
+          model:'claude-haiku-4-5-20251001',
+          max_tokens: 8,
+          messages:[{role:'user', content:'ping'}]
+        })
+      });
+      ok = r.ok;
+      if(!ok){ const t = await r.text(); info = t.slice(0,180); }
+    } else if(c.aiProvider === 'openai'){
+      const r = await fetch('https://api.openai.com/v1/models', {
+        headers:{ 'Authorization': 'Bearer '+key }
+      });
+      ok = r.ok;
+      if(!ok){ const t = await r.text(); info = t.slice(0,180); }
+    } else if(c.aiProvider === 'gemini'){
+      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key='+encodeURIComponent(key));
+      ok = r.ok;
+      if(!ok){ const t = await r.text(); info = t.slice(0,180); }
+    }
+    if(ok){
+      c.lastTest = new Date().toISOString();
+      saveCarteraLocal();
+      saveCarteraRemote();
+      cartSetStatus(id, 'ok', '✅ Conexión OK ('+c.aiProvider+').');
+    } else {
+      cartSetStatus(id, 'err', '❌ Falló: '+(info||'sin respuesta'));
+    }
+  }catch(e){
+    cartSetStatus(id, 'err', '❌ Error de red: '+(e.message||e));
+  }
+}
+
+function cartToggleAag(id){
+  const c = carteraClients.find(x=>x.id===id); if(!c) return;
+  c.aagActive = !c.aagActive;
+  saveCarteraLocal();
+  saveCarteraRemote();
+  renderCartera();
+}
+
+function renderCartera(){
+  const list = document.getElementById('cartList');
+  const empty = document.getElementById('cartEmpty');
+  const count = document.getElementById('cartCount');
+  count.textContent = carteraClients.length;
+  if(!carteraClients.length){
+    list.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  list.innerHTML = carteraClients.map(c => {
+    const provOpts = AI_PROVIDERS.map(p=>`<option value="${p.id}" ${c.aiProvider===p.id?'selected':''}>${p.label}</option>`).join('');
+    const masked = c.apiKey ? c.apiKey.slice(0,4)+'••••'+c.apiKey.slice(-4) : '';
+    const aagOn = !!c.aagActive;
+    const lastTestStr = c.lastTest ? new Date(c.lastTest).toLocaleString('es-CL') : '';
+    const logoHtml = c.logo
+      ? `<img src="${c.logo}" alt="logo">`
+      : `<span>${(c.name||'?').charAt(0).toUpperCase()}</span>`;
+    return `
+      <div class="cart-card" data-cart-id="${c.id}">
+        <div class="cart-card-hd">
+          <div class="cart-card-logo" onclick="document.getElementById('cartLogo_${c.id}').click()" style="cursor:pointer;" title="Subir logo">
+            ${logoHtml}
+          </div>
+          <input id="cartLogo_${c.id}" type="file" accept="image/*" style="display:none;" onchange="cartUploadLogo('${c.id}', this)">
+          <div class="cart-card-info">
+            <input class="cart-name-input" type="text" value="${escH(c.name)}" onchange="cartUpdateField('${c.id}','name',this.value)" style="border:none;background:transparent;font-size:13px;font-weight:800;color:#0f172a;width:100%;outline:none;padding:2px 0;">
+            <div class="cart-card-sub">${c.apiKeySaved?'🔑 API guardada':'⚠ Sin API Key'} · ${aagOn?'AAG ✓':'AAG ✗'}${lastTestStr?' · Probado: '+escH(lastTestStr):''}</div>
+          </div>
+          <div class="cart-card-actions">
+            ${c.logo?`<button type="button" class="cart-icon-btn" onclick="cartUpdateField('${c.id}','logo','');renderCartera()" title="Quitar logo">🗑📷</button>`:''}
+            <button type="button" class="cart-icon-btn del" onclick="cartDeleteClient('${c.id}')" title="Eliminar cliente">🗑</button>
+          </div>
+        </div>
+        <div class="cart-row">
+          <label>Email</label>
+          <input type="email" value="${escH(c.contactEmail)}" placeholder="contacto@cliente.cl" onchange="cartUpdateField('${c.id}','contactEmail',this.value)">
+        </div>
+        <div class="cart-row">
+          <label>WhatsApp</label>
+          <input type="tel" value="${escH(c.contactWhatsapp)}" placeholder="+56 9 ..." onchange="cartUpdateField('${c.id}','contactWhatsapp',this.value)">
+        </div>
+        <div class="cart-row">
+          <label>IA</label>
+          <select onchange="cartUpdateField('${c.id}','aiProvider',this.value)">${provOpts}</select>
+        </div>
+        <div class="cart-row">
+          <label>API Key</label>
+          <input class="cart-key-input" type="password" value="${escH(c.apiKey)}" placeholder="${masked||'sk-...'}" autocomplete="off">
+        </div>
+        <div class="cart-key-bar">
+          <button type="button" class="b-save" onclick="cartSaveApiKey('${c.id}')">💾 Guardar</button>
+          <button type="button" class="b-del" onclick="cartDeleteApiKey('${c.id}')">🗑 Borrar</button>
+          <button type="button" class="b-test" onclick="cartTestApi('${c.id}')">🔌 Conectar</button>
+        </div>
+        <div class="cart-status"></div>
+        <div class="cart-aag-row ${aagOn?'on':''}">
+          <div class="lbl">
+            ${aagOn?'✓ AAG activo':'✗ AAG inactivo'}
+            <small>Anexo Asistente Apoyo Gestión · ${escH(AAG_COST_NOTE)}</small>
+          </div>
+          <div class="cart-switch ${aagOn?'on':''}" onclick="cartToggleAag('${c.id}')" title="Activar/desactivar AAG"></div>
+        </div>
+        <div class="cart-card-notes">
+          <textarea placeholder="Notas (estado de pago, plan, observaciones)..." onchange="cartUpdateField('${c.id}','notes',this.value)">${escH(c.notes||'')}</textarea>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+loadCarteraLocal();
+
+// ════════════════════════════════════════════════════════════
+// MIGRACIÓN LEGACY (daniel-marrero-cosm → agendorganizado)
+// ════════════════════════════════════════════════════════════
+const LEGACY_COLLECTIONS = ['_config','schedule','patients','presupuestos','voucherPayments','consentTemplates','consentRequests'];
+let _legacyApp = null, _legacyDb = null, _legacyAuth = null, _legacyStorage = null;
+
+function getLegacyApp(){
+  if(_legacyApp) return _legacyApp;
+  if(typeof firebase==='undefined' || !FIREBASE_CONFIG_LEGACY) return null;
+  try{
+    _legacyApp = firebase.initializeApp(FIREBASE_CONFIG_LEGACY, 'legacy');
+    _legacyDb = _legacyApp.firestore();
+    _legacyAuth = _legacyApp.auth();
+    try{ _legacyStorage = _legacyApp.storage(); }catch(e){}
+  }catch(e){ console.warn('Legacy init:', e); return null; }
+  return _legacyApp;
+}
+
+async function migrateFromLegacy(opts){
+  opts = opts || {};
+  const includeStorage = !!opts.includeStorage;
+  const logEl = document.getElementById('migrateLog');
+  function log(msg, kind){
+    if(!logEl) return;
+    const line = document.createElement('div');
+    line.style.cssText = 'font-size:11px;padding:3px 0;border-bottom:1px solid #f1f5f9;color:'+(kind==='err'?'#dc2626':kind==='ok'?'#16a34a':'#475569');
+    line.textContent = msg;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+  function setBtn(disabled, txt){
+    const b = document.getElementById('migrateBtn');
+    if(b){ b.disabled = !!disabled; if(txt) b.textContent = txt; }
+  }
+  setBtn(true, '⏳ Migrando...');
+  log('▶ Iniciando migración desde proyecto legacy...');
+
+  if(!db){ log('❌ Firestore destino no inicializado.', 'err'); setBtn(false, '🔁 Reintentar migración'); return; }
+  if(!getLegacyApp()){ log('❌ No se pudo inicializar app legacy.', 'err'); setBtn(false, '🔁 Reintentar migración'); return; }
+
+  try{
+    log('• Autenticando en proyecto destino (agendorganizado)...');
+    await ensureAuth();
+    log('• Autenticando en proyecto legacy (daniel-marrero-cosm)...');
+    await _legacyAuth.signInAnonymously();
+    log('✓ Auth OK en ambos proyectos.', 'ok');
+  }catch(e){
+    log('❌ Auth falló: '+(e.message||e), 'err');
+    log('💡 Verifica que Anonymous Sign-In esté habilitado en ambos proyectos (Console → Authentication → Sign-in method → Anonymous → Enable).', 'err');
+    setBtn(false, '🔁 Reintentar migración');
+    return;
+  }
+
+  let totalDocs = 0, totalErr = 0;
+  for(const col of LEGACY_COLLECTIONS){
+    log('— Colección: '+col+' —');
+    try{
+      const snap = await _legacyDb.collection(col).get();
+      log('  Leídos '+snap.size+' docs.');
+      let count = 0;
+      for(const doc of snap.docs){
+        try{
+          await db.collection(col).doc(doc.id).set(doc.data(), {merge:true});
+          count++;
+        }catch(e){
+          totalErr++;
+          console.warn('Doc fail '+col+'/'+doc.id, e);
+          log('  ✗ '+col+'/'+doc.id+': '+(e.message||e), 'err');
+        }
+      }
+      log('  ✓ Copiados '+count+'/'+snap.size+' en '+col, 'ok');
+      totalDocs += count;
+    }catch(e){
+      log('  ❌ Falló colección '+col+': '+(e.message||e), 'err');
+      totalErr++;
+    }
+  }
+
+  if(includeStorage){
+    log('— Migrando Storage (vouchers + consents) —');
+    try{
+      await migrateLegacyStorageFiles(log);
+    }catch(e){ log('❌ Storage error: '+(e.message||e), 'err'); }
+  } else {
+    log('• Storage NO migrado (los archivos viejos siguen disponibles en URLs del proyecto legacy).');
+  }
+
+  log('━━━━━━━━━━━━━━━━━━━━━━━━━', 'ok');
+  log('🎉 Migración finalizada. '+totalDocs+' docs copiados. Errores: '+totalErr, totalErr?'err':'ok');
+  if(totalErr === 0){
+    log('💡 Recarga la página para ver los datos en el nuevo proyecto.', 'ok');
+  }
+  setBtn(false, '✓ Migración hecha — Volver a ejecutar');
+}
+
+async function migrateLegacyStorageFiles(log){
+  if(!fbStorage){ log('  ⚠ Storage destino no disponible (habilítalo en consola).', 'err'); return; }
+  if(!_legacyStorage){ log('  ⚠ Storage legacy no disponible.', 'err'); return; }
+  // Files referenced from Firestore that we already migrated.
+  const refs = new Set();
+  try{
+    const vs = await db.collection('voucherPayments').get();
+    vs.forEach(d=>{ const u = (d.data().fileUrl||d.data().url||''); if(u) refs.add(u); });
+  }catch(e){}
+  try{
+    const ts = await db.collection('consentTemplates').get();
+    ts.forEach(d=>{ const u = (d.data().fileUrl||d.data().url||''); if(u) refs.add(u); });
+  }catch(e){}
+  log('  • Archivos referenciados encontrados: '+refs.size);
+  let ok = 0, fail = 0;
+  for(const url of refs){
+    try{
+      // Extract path from legacy storage URL
+      const m = url.match(/\/o\/([^?]+)/);
+      if(!m) continue;
+      const path = decodeURIComponent(m[1]);
+      const blob = await (await fetch(url)).blob();
+      const newRef = fbStorage.ref().child(path);
+      await newRef.put(blob);
+      ok++;
+      if(ok % 5 === 0) log('  ✓ '+ok+' archivos copiados...');
+    }catch(e){ fail++; console.warn('Storage file fail:',url,e); }
+  }
+  log('  ✓ Storage: '+ok+' OK / '+fail+' fallos', fail?'err':'ok');
+}
+
+function openMigratePanel(){
+  const m = document.getElementById('migrateModal');
+  if(m){ m.classList.remove('hidden'); document.getElementById('migrateLog').innerHTML=''; }
+}
+function closeMigratePanel(){
+  const m = document.getElementById('migrateModal');
+  if(m) m.classList.add('hidden');
+}
+
 // ════ CLINIC CONFIG ════
 let clinicConfig = {name:'', logo:''};
 
@@ -1529,19 +2184,23 @@ function saveClinicConfig(){
 function updateNavBrand(){
   const nameEl = document.getElementById('navName');
   const logoEl = document.getElementById('navLogo');
+  const profEl = document.getElementById('profBadge');
   if(clinicConfig.name) nameEl.textContent = clinicConfig.name;
-  else nameEl.textContent = '💆 Daniel Marrero';
+  else nameEl.textContent = '📋 AgendOrganizado';
+  if(profEl){
+    profEl.textContent = clinicConfig.name || 'AgendOrganizado · Plataforma multi-cliente';
+  }
   if(clinicConfig.logo){ logoEl.src=clinicConfig.logo; logoEl.style.display='block'; }
   else { logoEl.style.display='none'; }
 }
 
 function getClinicBrand(){
-  return { name: clinicConfig.name||'Daniel Marrero Cosmetólogo', logo: clinicConfig.logo||'' };
+  return { name: clinicConfig.name||'AgendOrganizado', logo: clinicConfig.logo||'' };
 }
 
 // ── Config modal ──
 let cfgTab = 'clinica';
-const CFG_TABS = ['clinica','usuarios','boxes','servicios'];
+const CFG_TABS = ['clinica','usuarios','boxes','servicios','cartera'];
 function switchCfgTab(tab){
   cfgTab = tab;
   CFG_TABS.forEach(t=>{
@@ -1553,6 +2212,7 @@ function switchCfgTab(tab){
   if(tab==='usuarios') renderUsersList();
   if(tab==='boxes') renderBoxesCfg();
   if(tab==='servicios'){ initSvcEditBuf(); renderSvcAdmin(); }
+  if(tab==='cartera') cartShow();
 }
 
 function openCfgModal(){
@@ -1759,6 +2419,7 @@ function listenConfig(){
         if(d.boxes) loadBoxesFromConfig({names:d.boxes});
       }
       if(doc.id==='servicios' && d){ loadServiciosFromConfig(d); }
+      if(doc.id==='cartera' && d){ loadCarteraFromRemote(d); }
     });
   },e=>console.warn('Config listener:',e));
 }
@@ -2925,7 +3586,7 @@ function renderFinanzas(){
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px;">
       <div class="stat-card"><div class="stat-lbl">Atenciones totales</div><div class="stat-val">${all.count}</div></div>
       <div class="stat-card"><div class="stat-lbl">Total facturado</div><div class="stat-val" style="font-size:20px">${money(grandGross)}</div></div>
-      <div class="stat-card"><div class="stat-lbl">Daniel Marrero</div><div class="stat-val" style="font-size:20px;color:#1d4ed8">${money(grandDaniel)}</div></div>
+      <div class="stat-card"><div class="stat-lbl">${escH(getClinicBrand().name)}</div><div class="stat-val" style="font-size:20px;color:#1d4ed8">${money(grandDaniel)}</div></div>
       <div class="stat-card"><div class="stat-lbl">Clínica MES</div><div class="stat-val" style="font-size:20px;color:#7c3aed">${money(grandClinic)}</div></div>
       <div class="stat-card"><div class="stat-lbl">Clínica ABBA</div><div class="stat-val" style="font-size:20px;color:#be185d">${money(grandDoctor)}</div></div>
     </div>
@@ -3460,7 +4121,8 @@ async function sendAiMsg(){
   // Build context: today's schedule
   const todayKey=toDateKey(today);
   const sched=getDayStats(todayKey);
-  const systemPrompt=`Eres el asistente de agenda de Daniel Marrero Cosmetólogo. Ayudas a agendar citas, responder pacientes y consultar disponibilidad.
+  const _brandName = getClinicBrand().name;
+  const systemPrompt=`Eres el asistente de agenda de ${_brandName}. Ayudas a agendar citas, responder pacientes y consultar disponibilidad.
 Datos de hoy (${todayKey}): ${sched.count} citas, total $${sched.gross}.
 Responde en español, de forma breve y profesional. Si el usuario pide agendar, indica que abra el calendario o usa el botón de cita.`;
   try{
@@ -3644,16 +4306,15 @@ async function presGetNextNumero(){
 
 function buildPresHTML(data, numero){
   const brand = getClinicBrand();
-  const logo = brand.logo ? `<img src="${brand.logo}" style="width:80px;height:80px;object-fit:contain;border-radius:8px;">` : `<div style="width:80px;height:80px;border-radius:8px;background:#1a56b0;color:#fff;display:flex;align-items:center;justify-content:center;font-size:36px;">💆</div>`;
+  const logo = brand.logo ? `<img src="${brand.logo}" style="width:80px;height:80px;object-fit:contain;border-radius:8px;">` : `<div style="width:80px;height:80px;border-radius:8px;background:#1a56b0;color:#fff;display:flex;align-items:center;justify-content:center;font-size:36px;">📋</div>`;
   const fechaStr = data.fecha.toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric'});
   const validoStr = data.validoHasta.toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric'});
   return `
     <div style="display:flex;align-items:center;gap:18px;border-bottom:4px solid #1a56b0;padding-bottom:16px;margin-bottom:20px;">
       ${logo}
       <div style="flex:1;">
-        <div style="font-size:28px;font-weight:900;color:#1a56b0;letter-spacing:-.5px;">DANIEL MARRERO</div>
-        <div style="font-size:14px;color:#475569;font-weight:600;">Cosmetólogo Profesional</div>
-        ${brand.name && brand.name!=='Daniel Marrero Cosmetólogo' ? `<div style="font-size:12px;color:#64748b;margin-top:4px;">${escH(brand.name)}</div>` : ''}
+        <div style="font-size:24px;font-weight:900;color:#1a56b0;letter-spacing:-.3px;">${escH(brand.name.toUpperCase())}</div>
+        <div style="font-size:12px;color:#64748b;margin-top:4px;">Presupuesto profesional</div>
       </div>
       <div style="text-align:right;">
         <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Presupuesto</div>
@@ -3865,7 +4526,7 @@ async function presShare(mode){
   const msg = presBuildMessage(data, url);
   if(mode === 'email'){
     const to = data.cliEmail;
-    const subj = 'Presupuesto N° '+presState.numero+' — Daniel Marrero';
+    const subj = 'Presupuesto N° '+presState.numero+' — '+getClinicBrand().name;
     const targetURL = buildEmailURL(to, subj, msg);
     if(mobile){
       // On mobile: navigate current tab to mailto: — OS intercepts and opens default email app (Gmail/Mail)
@@ -3904,7 +4565,7 @@ function presBuildMessage(data, url){
     url ? `📎 Descarga el PDF aquí:\n${url}` : `El PDF va adjunto a este mensaje.`,
     ``,
     `Saludos,`,
-    `${data.emittedBy} — Daniel Marrero Cosmetólogo`
+    `${data.emittedBy} — ${getClinicBrand().name}`
   ];
   return lines.join('\n');
 }
@@ -4677,7 +5338,7 @@ function csBuildMessage(req, link){
   const lines = [
     `Hola ${req.patientName},`,
     ``,
-    `Daniel Marrero Cosmetólogo te ha enviado el siguiente consentimiento informado:`,
+    `${getClinicBrand().name} te ha enviado el siguiente consentimiento informado:`,
     `📄 ${req.templateName}`,
     ``,
     `Por favor abre el siguiente link, lee el documento y responde si AUTORIZAS o NO AUTORIZAS la realización del procedimiento:`,
