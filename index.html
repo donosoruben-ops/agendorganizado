@@ -2154,61 +2154,130 @@ function saveCfg(){
 document.getElementById('cfgModal').addEventListener('click', e=>{ if(e.target.id==='cfgModal') closeCfgModal(); });
 document.getElementById('cfgName').addEventListener('input', updateCfgPreview);
 
-// ════ PERSISTENCE ════
-let saveTimers={};
-function scheduleWrite(dateKey){
-  clearTimeout(saveTimers[dateKey]);
-  saveTimers[dateKey]=setTimeout(()=>{ persistDay(dateKey); }, 800);
+// ════ PERSISTENCE — robusto contra pérdida de datos ════
+// pendingWrites: dateKeys con cambios locales NO confirmados en Firestore.
+// Persistido en localStorage para sobrevivir refresh (retry automático on boot).
+// Listener de Firestore RESPETA esta lista: nunca sobrescribe un día con cambios pendientes.
+let saveTimers = {};
+const PENDING_KEY = 'agendaPendingWrites';
+const pendingWrites = new Set();
+const writeRetryCount = {}; // dateKey → contador de reintentos consecutivos
+
+function loadPendingWrites(){
+  try{
+    const raw = localStorage.getItem(PENDING_KEY);
+    if(raw){
+      const arr = JSON.parse(raw);
+      if(Array.isArray(arr)) arr.forEach(k => pendingWrites.add(k));
+    }
+  }catch(e){}
+}
+function savePendingWrites(){
+  try{ localStorage.setItem(PENDING_KEY, JSON.stringify(Array.from(pendingWrites))); }catch(e){}
+}
+function persistLocalNow(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({appointments: state.appointments})); }catch(e){}
 }
 
-// Refresh all views that depend on appointments data
+function scheduleWrite(dateKey){
+  // 1. Marcar como pendiente y guardar local YA — sobrevive a refresh aunque cloud falle.
+  pendingWrites.add(dateKey);
+  savePendingWrites();
+  persistLocalNow();
+  setSyncColor('amber');
+  // 2. Debounce escritura a cloud (más corto que antes para fallar rápido si hay problema).
+  clearTimeout(saveTimers[dateKey]);
+  saveTimers[dateKey] = setTimeout(()=>{ persistDay(dateKey); }, 400);
+}
+
 function refreshAfterScheduleChange(){
   renderCalendar();
-  if(typeof renderMonthlyCalendar==='function') renderMonthlyCalendar();
-  if(currentView==='pacientes') renderPacientes();
-  if(currentView==='finanzas') renderFinanzas();
+  if(typeof renderMonthlyCalendar === 'function') renderMonthlyCalendar();
+  if(currentView === 'pacientes') renderPacientes();
+  if(currentView === 'finanzas') renderFinanzas();
 }
+
 async function persistDay(dateKey){
-  const dayData=state.appointments[dateKey]||{};
-  if(db){
-    await ensureAuth();
-    const doc={}; Object.entries(dayData).forEach(([h,v])=>{ doc[String(h)]=v; });
-    await db.collection('schedule').doc(dateKey).set(doc).catch(e=>console.warn(e));
+  const dayData = state.appointments[dateKey] || {};
+  persistLocalNow(); // backup local antes de tocar cloud
+  if(!db){
+    pendingWrites.delete(dateKey);
+    savePendingWrites();
+    if(!pendingWrites.size) setSyncColor('green');
+    return;
   }
-  try{ localStorage.setItem(STORAGE_KEY,JSON.stringify({appointments:state.appointments})); }catch(e){}
+  try{
+    await ensureAuth();
+    if(!fbAuth || !fbAuth.currentUser){
+      throw new Error('auth-not-ready');
+    }
+    const doc = {};
+    Object.entries(dayData).forEach(([h,v]) => { doc[String(h)] = v; });
+    await db.collection('schedule').doc(dateKey).set(doc);
+    pendingWrites.delete(dateKey);
+    writeRetryCount[dateKey] = 0;
+    savePendingWrites();
+    if(!pendingWrites.size) setSyncColor('green');
+  } catch(e){
+    console.error('persistDay FAILED for', dateKey, e);
+    setSyncColor('red');
+    writeRetryCount[dateKey] = (writeRetryCount[dateKey] || 0) + 1;
+    // Backoff exponencial: 2s, 4s, 8s, 16s, max 30s. Reintenta indefinidamente.
+    const delay = Math.min(30000, 1000 * Math.pow(2, writeRetryCount[dateKey]));
+    setTimeout(()=>persistDay(dateKey), delay);
+  }
 }
+
+function retryPendingOnBoot(){
+  // Tras cargar la app, intenta sincronizar TODO lo que quedó pendiente
+  // (datos que estaban en localStorage pero no llegaron a cloud).
+  pendingWrites.forEach(dateKey => {
+    setTimeout(()=>persistDay(dateKey), 500 + Math.random()*500);
+  });
+}
+
 function loadLocal(){
   try{
-    const raw=localStorage.getItem(STORAGE_KEY); if(!raw) return;
-    const p=JSON.parse(raw); if(p&&p.appointments) state.appointments=p.appointments;
+    const raw = localStorage.getItem(STORAGE_KEY); if(!raw) return;
+    const p = JSON.parse(raw); if(p && p.appointments) state.appointments = p.appointments;
   }catch(e){}
 }
 function normalizeDay(data){
-  const r={};
-  Object.entries(data||{}).forEach(function([k,v]){
-    const n=parseInt(k);
-    if(!isNaN(n)) r[n]=v; else r[k]=v;
+  const r = {};
+  Object.entries(data || {}).forEach(function([k,v]){
+    const n = parseInt(k);
+    if(!isNaN(n)) r[n] = v; else r[k] = v;
   });
   return r;
 }
 
+loadPendingWrites();
+
 // ════ SYNC ════
 async function startSync(){
   if(!db) return;
-  setSyncColor('amber');
-  await ensureAuth();
-  unsubSchedule=db.collection('schedule').onSnapshot(snap=>{
-    if(!state.writing){
-      snap.forEach(doc=>{ state.appointments[doc.id]=normalizeDay(doc.data()); });
-    }
-    setSyncColor('green');
+  setSyncColor(pendingWrites.size ? 'amber' : 'amber');
+  try{ await ensureAuth(); }catch(e){ setSyncColor('red'); console.error('Initial auth failed:', e); }
+  unsubSchedule = db.collection('schedule').onSnapshot(snap => {
+    snap.forEach(doc => {
+      // CRÍTICO: NUNCA sobrescribir un día con cambios locales pendientes.
+      // Esta línea evita la pérdida de datos cuando el listener llega después
+      // de una edición local pero antes de que su write confirme en cloud.
+      if(pendingWrites.has(doc.id)) return;
+      state.appointments[doc.id] = normalizeDay(doc.data());
+    });
+    if(!pendingWrites.size) setSyncColor('green');
     refreshAfterScheduleChange();
-  }, ()=>setSyncColor('red'));
+  }, e => {
+    console.error('Schedule listener error:', e);
+    setSyncColor('red');
+  });
   startPatientsSync();
   startVoucherPaymentsSync();
   startConsentTemplatesSync();
   startConsentRequestsSync();
   migrateLocal();
+  retryPendingOnBoot();
 }
 async function migrateLocal(){
   if(!db) return;
@@ -2237,13 +2306,24 @@ function setSyncColor(c){
   const dot=document.getElementById('syncDot');
   if(!dot) return;
   dot.style.background=c==='green'?'#4ade80':c==='amber'?'#fbbf24':'#f87171';
+  const badge = document.getElementById('userBadge');
+  const pending = (typeof pendingWrites !== 'undefined' && pendingWrites.size) || 0;
+  const label = c==='green' ? 'Sincronizado ✓' : c==='amber' ? `Guardando... (${pending} pendiente${pending===1?'':'s'})` : `⚠ Error de sync — reintentando${pending?' ('+pending+' pendiente'+(pending===1?'':'s')+')':''}`;
+  if(badge) badge.title = label;
+  dot.title = label;
 }
 
 // ════ CONFIG SYNC ════
 async function ensureAuth(){
   if(!fbAuth) return;
   if(fbAuth.currentUser) return;
-  await fbAuth.signInAnonymously().catch(e=>console.warn('Auth anon:',e));
+  // Propagar errores — antes silenciaba con console.warn y las escrituras fallaban silenciosamente.
+  try{
+    await fbAuth.signInAnonymously();
+  }catch(e){
+    console.error('Anonymous auth FAILED:', e);
+    throw e;
+  }
 }
 
 async function saveConfigDoc(docId, data){
@@ -2820,9 +2900,7 @@ function saveAppt(){
   // If box changed, remove old key
   if(newKey!==key) delete getDayData(dateKey)[key];
   getDayData(dateKey)[newKey]=slot;
-  state.writing=true;
   scheduleWrite(dateKey);
-  setTimeout(()=>{ state.writing=false; },1200);
   closeApptModal();
   refreshAfterScheduleChange();
 }
