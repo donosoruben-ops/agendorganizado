@@ -747,39 +747,8 @@
       </div>
       <div id="cartFooter" class="cart-footer hidden">
         <button type="button" class="lock-btn" onclick="cartLock()">🔒 Bloquear cartera</button>
-        <button type="button" class="lock-btn" onclick="openMigratePanel()" style="background:#fef3c7;color:#92400e;border-color:#f59e0b;">📦 Migrar legacy</button>
         <button type="button" class="btn-cancel" onclick="closeCfgModal()">Cerrar</button>
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ MIGRATION MODAL (Legacy → Nuevo proyecto) ══ -->
-<div id="migrateModal" class="modal-bg hidden">
-  <div class="modal-box" style="max-width:560px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;">
-    <div class="modal-hd">
-      <h3>📦 Migrar desde proyecto legacy</h3>
-      <button type="button" onclick="closeMigratePanel()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:16px;">✕</button>
-    </div>
-    <div style="padding:16px;overflow-y:auto;flex:1;">
-      <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:9px;padding:11px 14px;margin-bottom:12px;font-size:12px;color:#92400e;line-height:1.5;">
-        <strong>⚠ Solo úsalo una vez.</strong> Copia todos los datos de <code>daniel-marrero-cosm</code> (clínica original) al proyecto actual <code>agendorganizado</code>. Si vuelves a ejecutarlo sobreescribe los registros con el mismo ID.
-      </div>
-      <div style="font-size:12px;color:#475569;margin-bottom:10px;line-height:1.5;">
-        Se copiarán las colecciones: <strong>_config, schedule, patients, presupuestos, voucherPayments, consentTemplates, consentRequests</strong>.
-      </div>
-      <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#0f172a;margin-bottom:14px;cursor:pointer;">
-        <input type="checkbox" id="migrateIncludeStorage" checked>
-        Incluir archivos de Storage (vouchers + plantillas de consentimientos)
-      </label>
-      <button type="button" id="migrateBtn" onclick="migrateFromLegacy({includeStorage: document.getElementById('migrateIncludeStorage').checked})" style="width:100%;background:linear-gradient(135deg,#1a56b0,#1e3a8a);color:#fff;border:none;border-radius:9px;padding:11px;font-size:13px;font-weight:800;cursor:pointer;margin-bottom:14px;">
-        ▶ Iniciar migración
-      </button>
-      <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">Log de migración</div>
-      <div id="migrateLog" style="background:#0f172a;color:#e2e8f0;border-radius:7px;padding:10px 12px;font-family:Consolas,monospace;font-size:11px;max-height:280px;overflow-y:auto;min-height:120px;"></div>
-    </div>
-    <div class="modal-ft" style="flex-shrink:0;">
-      <button type="button" class="btn-cancel" onclick="closeMigratePanel()">Cerrar</button>
     </div>
   </div>
 </div>
@@ -1225,17 +1194,6 @@ const FIREBASE_CONFIG = {
   storageBucket:     "agendorganizado.firebasestorage.app",
   messagingSenderId: "720407732051",
   appId:             "1:720407732051:web:7eb93d7c3832063f5e4ba6"
-};
-
-// Proyecto legacy — sólo para migración desde Daniel Marrero original.
-// Una vez completada la migración, este bloque puede eliminarse.
-const FIREBASE_CONFIG_LEGACY = {
-  apiKey:            "AIzaSyDzlLwZzjseOjMx8VNhCUFQGM11xZFk6YA",
-  authDomain:        "daniel-marrero-cosm.firebaseapp.com",
-  projectId:         "daniel-marrero-cosm",
-  storageBucket:     "daniel-marrero-cosm.firebasestorage.app",
-  messagingSenderId: "873430254007",
-  appId:             "1:873430254007:web:bdd9490bada2dbf985e832"
 };
 
 // ════ CONSTANTS ════
@@ -2024,141 +1982,6 @@ function renderCartera(){
 }
 
 loadCarteraLocal();
-
-// ════════════════════════════════════════════════════════════
-// MIGRACIÓN LEGACY (daniel-marrero-cosm → agendorganizado)
-// ════════════════════════════════════════════════════════════
-const LEGACY_COLLECTIONS = ['_config','schedule','patients','presupuestos','voucherPayments','consentTemplates','consentRequests'];
-let _legacyApp = null, _legacyDb = null, _legacyAuth = null, _legacyStorage = null;
-
-function getLegacyApp(){
-  if(_legacyApp) return _legacyApp;
-  if(typeof firebase==='undefined' || !FIREBASE_CONFIG_LEGACY) return null;
-  try{
-    _legacyApp = firebase.initializeApp(FIREBASE_CONFIG_LEGACY, 'legacy');
-    _legacyDb = _legacyApp.firestore();
-    _legacyAuth = _legacyApp.auth();
-    try{ _legacyStorage = _legacyApp.storage(); }catch(e){}
-  }catch(e){ console.warn('Legacy init:', e); return null; }
-  return _legacyApp;
-}
-
-async function migrateFromLegacy(opts){
-  opts = opts || {};
-  const includeStorage = !!opts.includeStorage;
-  const logEl = document.getElementById('migrateLog');
-  function log(msg, kind){
-    if(!logEl) return;
-    const line = document.createElement('div');
-    line.style.cssText = 'font-size:11px;padding:3px 0;border-bottom:1px solid #f1f5f9;color:'+(kind==='err'?'#dc2626':kind==='ok'?'#16a34a':'#475569');
-    line.textContent = msg;
-    logEl.appendChild(line);
-    logEl.scrollTop = logEl.scrollHeight;
-  }
-  function setBtn(disabled, txt){
-    const b = document.getElementById('migrateBtn');
-    if(b){ b.disabled = !!disabled; if(txt) b.textContent = txt; }
-  }
-  setBtn(true, '⏳ Migrando...');
-  log('▶ Iniciando migración desde proyecto legacy...');
-
-  if(!db){ log('❌ Firestore destino no inicializado.', 'err'); setBtn(false, '🔁 Reintentar migración'); return; }
-  if(!getLegacyApp()){ log('❌ No se pudo inicializar app legacy.', 'err'); setBtn(false, '🔁 Reintentar migración'); return; }
-
-  try{
-    log('• Autenticando en proyecto destino (agendorganizado)...');
-    await ensureAuth();
-    log('• Autenticando en proyecto legacy (daniel-marrero-cosm)...');
-    await _legacyAuth.signInAnonymously();
-    log('✓ Auth OK en ambos proyectos.', 'ok');
-  }catch(e){
-    log('❌ Auth falló: '+(e.message||e), 'err');
-    log('💡 Verifica que Anonymous Sign-In esté habilitado en ambos proyectos (Console → Authentication → Sign-in method → Anonymous → Enable).', 'err');
-    setBtn(false, '🔁 Reintentar migración');
-    return;
-  }
-
-  let totalDocs = 0, totalErr = 0;
-  for(const col of LEGACY_COLLECTIONS){
-    log('— Colección: '+col+' —');
-    try{
-      const snap = await _legacyDb.collection(col).get();
-      log('  Leídos '+snap.size+' docs.');
-      let count = 0;
-      for(const doc of snap.docs){
-        try{
-          await db.collection(col).doc(doc.id).set(doc.data(), {merge:true});
-          count++;
-        }catch(e){
-          totalErr++;
-          console.warn('Doc fail '+col+'/'+doc.id, e);
-          log('  ✗ '+col+'/'+doc.id+': '+(e.message||e), 'err');
-        }
-      }
-      log('  ✓ Copiados '+count+'/'+snap.size+' en '+col, 'ok');
-      totalDocs += count;
-    }catch(e){
-      log('  ❌ Falló colección '+col+': '+(e.message||e), 'err');
-      totalErr++;
-    }
-  }
-
-  if(includeStorage){
-    log('— Migrando Storage (vouchers + consents) —');
-    try{
-      await migrateLegacyStorageFiles(log);
-    }catch(e){ log('❌ Storage error: '+(e.message||e), 'err'); }
-  } else {
-    log('• Storage NO migrado (los archivos viejos siguen disponibles en URLs del proyecto legacy).');
-  }
-
-  log('━━━━━━━━━━━━━━━━━━━━━━━━━', 'ok');
-  log('🎉 Migración finalizada. '+totalDocs+' docs copiados. Errores: '+totalErr, totalErr?'err':'ok');
-  if(totalErr === 0){
-    log('💡 Recarga la página para ver los datos en el nuevo proyecto.', 'ok');
-  }
-  setBtn(false, '✓ Migración hecha — Volver a ejecutar');
-}
-
-async function migrateLegacyStorageFiles(log){
-  if(!fbStorage){ log('  ⚠ Storage destino no disponible (habilítalo en consola).', 'err'); return; }
-  if(!_legacyStorage){ log('  ⚠ Storage legacy no disponible.', 'err'); return; }
-  // Files referenced from Firestore that we already migrated.
-  const refs = new Set();
-  try{
-    const vs = await db.collection('voucherPayments').get();
-    vs.forEach(d=>{ const u = (d.data().fileUrl||d.data().url||''); if(u) refs.add(u); });
-  }catch(e){}
-  try{
-    const ts = await db.collection('consentTemplates').get();
-    ts.forEach(d=>{ const u = (d.data().fileUrl||d.data().url||''); if(u) refs.add(u); });
-  }catch(e){}
-  log('  • Archivos referenciados encontrados: '+refs.size);
-  let ok = 0, fail = 0;
-  for(const url of refs){
-    try{
-      // Extract path from legacy storage URL
-      const m = url.match(/\/o\/([^?]+)/);
-      if(!m) continue;
-      const path = decodeURIComponent(m[1]);
-      const blob = await (await fetch(url)).blob();
-      const newRef = fbStorage.ref().child(path);
-      await newRef.put(blob);
-      ok++;
-      if(ok % 5 === 0) log('  ✓ '+ok+' archivos copiados...');
-    }catch(e){ fail++; console.warn('Storage file fail:',url,e); }
-  }
-  log('  ✓ Storage: '+ok+' OK / '+fail+' fallos', fail?'err':'ok');
-}
-
-function openMigratePanel(){
-  const m = document.getElementById('migrateModal');
-  if(m){ m.classList.remove('hidden'); document.getElementById('migrateLog').innerHTML=''; }
-}
-function closeMigratePanel(){
-  const m = document.getElementById('migrateModal');
-  if(m) m.classList.add('hidden');
-}
 
 // ════ CLINIC CONFIG ════
 let clinicConfig = {name:'', logo:''};
