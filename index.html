@@ -35,7 +35,7 @@
     .login-footer{text-align:center;padding:10px 0 18px;font-size:11px;color:#94a3b8;}
 
     /* ── NAV ── */
-    #topNav{background:var(--blue);color:#fff;height:54px;display:flex;align-items:center;padding:0 16px;gap:0;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.25);}
+    #topNav{background:var(--blue);color:#fff;height:76px;display:flex;align-items:center;padding:0 16px;gap:0;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.25);}
     .nav-tab{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 14px;cursor:pointer;border-radius:6px;transition:background .12s;font-size:11px;font-weight:600;color:rgba(255,255,255,.75);}
     .nav-tab i{font-size:18px;}
     .nav-tab:hover{background:rgba(255,255,255,.12);color:#fff;}
@@ -46,10 +46,10 @@
     #userBadge .role-tag.admin{background:#fbbf24;color:#78350f;}
     #syncDot{width:7px;height:7px;border-radius:50%;background:#4ade80;display:inline-block;}
     #navBrand{display:flex;align-items:center;gap:8px;margin-right:20px;}
-    #navAgendoLogo{height:34px;border-radius:5px;object-fit:contain;background:#fff;padding:2px;display:block;}
-    #navBrandPara{color:rgba(255,255,255,.7);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 1px;}
-    #navLogo{height:32px;border-radius:5px;display:none;object-fit:contain;}
-    #navName{font-weight:800;font-size:15px;letter-spacing:.3px;white-space:nowrap;}
+    #navAgendoLogo{height:68px;border-radius:7px;object-fit:contain;background:#fff;padding:3px;display:block;}
+    #navBrandPara{color:rgba(255,255,255,.85);font-size:13px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;margin:0 4px;}
+    #navLogo{height:54px;border-radius:6px;display:none;object-fit:contain;}
+    #navName{font-weight:800;font-size:17px;letter-spacing:.3px;white-space:nowrap;}
     .nav-icon-btn{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:6px;padding:5px 9px;cursor:pointer;font-size:15px;line-height:1;transition:background .12s;}
     .nav-icon-btn:hover{background:rgba(255,255,255,.28);}
     /* AAG nav button — mismo tamaño que .nav-tab; fondo verde si activo, rojo si inactivo */
@@ -374,9 +374,11 @@
         scrollbar-width:none;
       }
       #topNav::-webkit-scrollbar{display:none;}
-      #navBrand{margin-right:8px;flex-shrink:0;}
+      #navBrand{margin-right:8px;flex-shrink:0;gap:4px;}
       #navName{display:none;}
       #navLogo{height:28px;}
+      #navAgendoLogo{height:34px;padding:2px;}
+      #navBrandPara{font-size:10px;letter-spacing:1px;margin:0 2px;}
       .nav-tab{padding:4px 10px;font-size:10px;flex-shrink:0;}
       .nav-tab i, .nav-tab svg{width:16px;height:16px;font-size:16px;}
       #topNav .sp{flex:0 0 4px;min-width:4px;}
@@ -411,7 +413,7 @@
 <div id="loginScreen">
   <div class="login-card">
     <div class="login-brand">
-      <img id="loginAgendoLogo" src="agendo-logo.png?v=2" alt="AgendOrganizado">
+      <img id="loginAgendoLogo" src="agendo-logo.png?v=3" alt="AgendOrganizado">
       <div id="loginBrandPara" style="display:none;">para:</div>
       <img id="loginBrandLogo" src="" alt="logo">
       <div id="loginBrandName" style="display:none;"></div>
@@ -474,7 +476,7 @@
 <!-- TOP NAV -->
 <nav id="topNav">
   <div id="navBrand">
-    <img id="navAgendoLogo" src="agendo-logo.png?v=2" alt="AgendOrganizado">
+    <img id="navAgendoLogo" src="agendo-logo.png?v=3" alt="AgendOrganizado">
     <span id="navBrandPara" style="display:none;">para:</span>
     <img id="navLogo" src="" alt="logo">
     <span id="navName"></span>
