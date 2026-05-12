@@ -413,7 +413,7 @@
 <div id="loginScreen">
   <div class="login-card">
     <div class="login-brand">
-      <img id="loginAgendoLogo" src="agendo-logo.png?v=4" alt="AgendOrganizado">
+      <img id="loginAgendoLogo" src="agendo-logo.png?v=5" alt="AgendOrganizado">
       <div id="loginBrandPara" style="display:none;">para:</div>
       <img id="loginBrandLogo" src="" alt="logo">
       <div id="loginBrandName" style="display:none;"></div>
@@ -476,7 +476,7 @@
 <!-- TOP NAV -->
 <nav id="topNav">
   <div id="navBrand">
-    <img id="navAgendoLogo" src="agendo-logo.png?v=4" alt="AgendOrganizado">
+    <img id="navAgendoLogo" src="agendo-logo.png?v=5" alt="AgendOrganizado">
     <span id="navBrandPara" style="display:none;">para:</span>
     <img id="navLogo" src="" alt="logo">
     <span id="navName"></span>
@@ -1544,15 +1544,14 @@ function populateUserDropdown(){
 }
 
 function updateLoginBrand(){
+  // Pantalla de login: solo logo AgendO + subtítulo.
+  // El "para: [cliente]" aparece únicamente en el navbar después de iniciar sesión.
   const nameEl = document.getElementById('loginBrandName');
   const logoEl = document.getElementById('loginBrandLogo');
   const paraEl = document.getElementById('loginBrandPara');
-  const hasClient = !!(clinicConfig.name || clinicConfig.logo);
-  if(paraEl) paraEl.style.display = hasClient ? 'block' : 'none';
-  if(clinicConfig.name){ nameEl.textContent = clinicConfig.name; nameEl.style.display='block'; }
-  else { nameEl.textContent=''; nameEl.style.display='none'; }
-  if(clinicConfig.logo){ logoEl.src=clinicConfig.logo; logoEl.style.display='block'; }
-  else { logoEl.style.display='none'; }
+  if(paraEl) paraEl.style.display='none';
+  if(nameEl){ nameEl.textContent=''; nameEl.style.display='none'; }
+  if(logoEl){ logoEl.src=''; logoEl.style.display='none'; }
 }
 
 // ── Admin: change password ──
