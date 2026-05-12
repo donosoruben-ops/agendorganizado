@@ -3522,17 +3522,96 @@ function getAllVisitsFlat(){
   return out;
 }
 
+// Estado de navegación mensual en la vista global de finanzas
+let finSelectedMonth = null; // 'YYYY-MM'
+let finShowAll = false;       // si true, muestra todos los meses con datos en lugar del seleccionado
+
+function finCurrentMonthKey(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+function finShiftMonth(monthKey, delta){
+  const [y,m] = monthKey.split('-').map(Number);
+  const d = new Date(y, m-1+delta, 1);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+function finNavMonth(delta){
+  if(!finSelectedMonth) finSelectedMonth = finCurrentMonthKey();
+  finSelectedMonth = finShiftMonth(finSelectedMonth, delta);
+  renderFinanzas();
+}
+function finGoToday(){
+  finSelectedMonth = finCurrentMonthKey();
+  finShowAll = false;
+  renderFinanzas();
+}
+function finToggleAll(){
+  finShowAll = !finShowAll;
+  renderFinanzas();
+}
+
 function renderFinanzas(){
   const fin=document.getElementById('finContent'); if(!fin) return;
+  if(!finSelectedMonth) finSelectedMonth = finCurrentMonthKey();
   const all=getAllStats();
   const vchAll=getAllVoucherStats();
   const grandGross = all.gross + vchAll.gross;
   const grandDaniel = all.daniel + vchAll.daniel;
   const grandClinic = all.clinic + vchAll.clinic;
   const grandDoctor = all.doctor + vchAll.doctor;
-  const visits = getAllVisitsFlat();
-  const vouchers = Object.values(voucherPaymentsDB);
+  const allVisits = getAllVisitsFlat();
+  const allVouchers = Object.values(voucherPaymentsDB);
   const brandName = getClinicBrand().name;
+
+  // Construir set de meses con datos para saber dónde "hay algo"
+  const monthsWithData = new Set();
+  allVisits.forEach(v=>{ if(v.dateKey && (Number(v.amount)||(v.patient||'').trim())) monthsWithData.add(v.dateKey.slice(0,7)); });
+  allVouchers.forEach(v=>{ if(v.fecha) monthsWithData.add(v.fecha.slice(0,7)); });
+
+  // Etiqueta legible del mes seleccionado
+  const [sy,sm] = finSelectedMonth.split('-');
+  const selLabel = new Date(+sy, +sm-1, 1).toLocaleDateString('es-ES',{month:'long',year:'numeric'});
+  const isCurrent = finSelectedMonth === finCurrentMonthKey();
+
+  let monthlyHTML;
+  if(finShowAll){
+    monthlyHTML = buildMonthlyFinanceBlocks(allVisits, allVouchers, {showSplit:true, maxMonths:36});
+  } else {
+    const visits = allVisits.filter(v=> v.dateKey && v.dateKey.startsWith(finSelectedMonth+'-'));
+    const vouchers = allVouchers.filter(v=> v.fecha && v.fecha.startsWith(finSelectedMonth+'-'));
+    if(!visits.length && !vouchers.length){
+      monthlyHTML = `
+        <div class="fin-month">
+          <div class="fin-month-hd">
+            <div>
+              <div class="fmh-title">${selLabel}</div>
+              <div class="fmh-sub">Sin movimientos registrados en este mes</div>
+            </div>
+            <div class="fmh-total">${money(0)}</div>
+          </div>
+          <div class="fin-empty">No hay citas ni vouchers en ${selLabel}.</div>
+        </div>`;
+    } else {
+      monthlyHTML = buildMonthlyFinanceBlocks(visits, vouchers, {showSplit:true});
+    }
+  }
+
+  // Hint con meses cercanos que sí tienen datos (para que el usuario sepa dónde navegar)
+  const sortedData = Array.from(monthsWithData).sort();
+  let hintHTML = '';
+  if(!finShowAll && sortedData.length){
+    const others = sortedData.filter(k=>k!==finSelectedMonth).slice(-6).reverse();
+    if(others.length){
+      hintHTML = `<div style="font-size:11px;color:#64748b;margin:-2px 0 12px;text-align:center;">
+        Otros meses con movimiento:
+        ${others.map(k=>{
+          const [y,m]=k.split('-');
+          const lbl = new Date(+y,+m-1,1).toLocaleDateString('es-ES',{month:'short',year:'2-digit'});
+          return `<a href="#" onclick="finSelectedMonth='${k}';finShowAll=false;renderFinanzas();return false;" style="color:#1a56b0;font-weight:700;text-decoration:none;margin:0 5px;text-transform:capitalize;">${lbl}</a>`;
+        }).join('·')}
+      </div>`;
+    }
+  }
 
   fin.innerHTML=`
     <h2 style="font-size:18px;font-weight:800;color:#1e3a8a;margin-bottom:16px">Finanzas</h2>
@@ -3549,7 +3628,18 @@ function renderFinanzas(){
     </div>
 
     <div class="fin-section-title">📅 Cierre mensual — día por día</div>
-    ${buildMonthlyFinanceBlocks(visits, vouchers, {showSplit:true, maxMonths:24})}
+
+    <div style="display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+      <button type="button" onclick="finNavMonth(-1)" style="background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;color:#1a56b0;cursor:pointer;">← Mes anterior</button>
+      <div style="background:#1a56b0;color:#fff;padding:7px 16px;border-radius:8px;font-size:13px;font-weight:800;text-transform:capitalize;min-width:160px;text-align:center;">${selLabel}${isCurrent?' · HOY':''}</div>
+      <button type="button" onclick="finNavMonth(1)" style="background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;color:#1a56b0;cursor:pointer;">Mes siguiente →</button>
+      <button type="button" onclick="finGoToday()" style="background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;color:#475569;cursor:pointer;">Hoy</button>
+      <button type="button" onclick="finToggleAll()" style="background:${finShowAll?'#1a56b0':'#fff'};border:1px solid #cbd5e1;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;color:${finShowAll?'#fff':'#475569'};cursor:pointer;">${finShowAll?'✓ Ver todos':'Ver todos los meses'}</button>
+    </div>
+
+    ${hintHTML}
+
+    ${monthlyHTML}
   `;
 }
 
