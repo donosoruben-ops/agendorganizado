@@ -459,7 +459,7 @@
 <div id="loginScreen">
   <div class="login-card">
     <div class="login-brand">
-      <img id="loginAgendoLogo" src="agendo-logo.png?v=10" alt="AgendOrganizado">
+      <img id="loginAgendoLogo" src="agendo-logo.png?v=11" alt="AgendOrganizado">
       <div id="loginBrandPara" style="display:none;">para:</div>
       <img id="loginBrandLogo" src="" alt="logo">
       <div id="loginBrandName" style="display:none;"></div>
@@ -507,7 +507,7 @@
 <div id="agendoPanel">
   <div class="ap-header">
     <div class="ap-header-brand">
-      <img src="agendo-logo.png?v=10" alt="AgendOrganizado">
+      <img src="agendo-logo.png?v=11" alt="AgendOrganizado">
       <div>
         <h1>Panel AgendO</h1>
         <div class="ap-subtitle">Plataforma multi-cliente · gestiona tus negocios</div>
@@ -545,7 +545,7 @@
 <nav id="topNav">
   <button type="button" id="navBackPanelBtn" data-action="back-to-panel" title="Volver al Panel AgendO">← Panel</button>
   <div id="navBrand">
-    <img id="navAgendoLogo" src="agendo-logo.png?v=10" alt="AgendOrganizado">
+    <img id="navAgendoLogo" src="agendo-logo.png?v=11" alt="AgendOrganizado">
     <span id="navBrandPara" style="display:none;">para:</span>
     <img id="navLogo" src="" alt="logo">
     <span id="navName"></span>
@@ -2158,7 +2158,12 @@ function restoreActiveClientId(){
 
 // Migration: on first load with new code, enrich the seed client with the
 // existing single-tenant clinicConfig + usersList + boxesConfig.
+// Flag para evitar loops cuando el listener de Firestore vuelve a disparar
+// migrate (que podría saveCarteraRemote → listener → migrate → ...).
+let __agendoMigrationRan = false;
 function migrateLegacyToFirstClient(){
+  if(__agendoMigrationRan) return;
+  __agendoMigrationRan = true;
   ensureAllClientsShape();
   if(!carteraClients.length) return;
   const first = carteraClients[0];
