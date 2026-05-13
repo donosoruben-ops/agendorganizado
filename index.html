@@ -459,7 +459,7 @@
 <div id="loginScreen">
   <div class="login-card">
     <div class="login-brand">
-      <img id="loginAgendoLogo" src="agendo-logo.png?v=7" alt="AgendOrganizado">
+      <img id="loginAgendoLogo" src="agendo-logo.png?v=8" alt="AgendOrganizado">
       <div id="loginBrandPara" style="display:none;">para:</div>
       <img id="loginBrandLogo" src="" alt="logo">
       <div id="loginBrandName" style="display:none;"></div>
@@ -507,7 +507,7 @@
 <div id="agendoPanel">
   <div class="ap-header">
     <div class="ap-header-brand">
-      <img src="agendo-logo.png?v=7" alt="AgendOrganizado">
+      <img src="agendo-logo.png?v=8" alt="AgendOrganizado">
       <div>
         <h1>Panel AgendO</h1>
         <div class="ap-subtitle">Plataforma multi-cliente · gestiona tus negocios</div>
@@ -545,7 +545,7 @@
 <nav id="topNav">
   <button type="button" id="navBackPanelBtn" onclick="exitToAgendoPanel()" title="Volver al Panel AgendO">← Panel</button>
   <div id="navBrand">
-    <img id="navAgendoLogo" src="agendo-logo.png?v=7" alt="AgendOrganizado">
+    <img id="navAgendoLogo" src="agendo-logo.png?v=8" alt="AgendOrganizado">
     <span id="navBrandPara" style="display:none;">para:</span>
     <img id="navLogo" src="" alt="logo">
     <span id="navName"></span>
@@ -2239,16 +2239,30 @@ function renderAgendoPanel(){
 }
 
 function enterClient(id){
-  const c = carteraClients.find(x=>x.id===id);
+  console.log('[enterClient] start id=', id);
+  // 1) Validar primero
+  const c = carteraClients.find(x => x.id === id);
   if(!c){ alert('Cliente no encontrado.'); return; }
+  // 2) Aplicar config del cliente al estado global
   activeClientId = id;
   try{ localStorage.setItem(ACTIVE_CLIENT_LS_KEY, id); }catch(e){}
-  applyActiveClient();
+  try{
+    applyActiveClient();
+  }catch(err){
+    console.error('[enterClient] applyActiveClient FAILED:', err);
+    alert('Error aplicando cliente: ' + (err && err.message ? err.message : err));
+    // seguir intentando entrar igual
+  }
+  // 3) Cerrar panel y mostrar app
   hideAgendoPanel();
-  showApp();
-  renderCalendar();
-  renderMonthlyCalendar();
-  if(fbOK && typeof startSync === 'function') startSync();
+  try{ showApp(); }catch(err){ console.error('[enterClient] showApp:', err); }
+  // 4) Render del calendario (no debe bloquear navegación si falla)
+  try{ renderCalendar(); }catch(err){ console.error('[enterClient] renderCalendar:', err); }
+  try{ renderMonthlyCalendar(); }catch(err){ console.error('[enterClient] renderMonthlyCalendar:', err); }
+  if(fbOK && typeof startSync === 'function'){
+    try{ startSync(); }catch(err){ console.error('[enterClient] startSync:', err); }
+  }
+  console.log('[enterClient] done');
 }
 
 function exitToAgendoPanel(){
