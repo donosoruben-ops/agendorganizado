@@ -238,7 +238,7 @@
     #navBackPanelBtn.show{display:inline-flex;}
 
     /* ── CONFIG MODAL ── */
-    #cfgModal .modal-box{max-width:820px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;}
+    #cfgModal .modal-box{max-width:min(1180px,96vw);width:96vw;max-height:94vh;display:flex;flex-direction:column;overflow:hidden;}
     .cfg-body{display:flex;flex-direction:row-reverse;flex:1;min-height:0;overflow:hidden;}
     .cfg-tabs{display:flex;flex-direction:column;background:#f8fafc;border-left:1px solid #e2e8f0;width:180px;flex-shrink:0;padding:14px 8px;gap:4px;overflow-y:auto;}
     .cfg-tabs::-webkit-scrollbar{display:none;}
@@ -459,7 +459,7 @@
 <div id="loginScreen">
   <div class="login-card">
     <div class="login-brand">
-      <img id="loginAgendoLogo" src="agendo-logo.png?v=6" alt="AgendOrganizado">
+      <img id="loginAgendoLogo" src="agendo-logo.png?v=7" alt="AgendOrganizado">
       <div id="loginBrandPara" style="display:none;">para:</div>
       <img id="loginBrandLogo" src="" alt="logo">
       <div id="loginBrandName" style="display:none;"></div>
@@ -507,7 +507,7 @@
 <div id="agendoPanel">
   <div class="ap-header">
     <div class="ap-header-brand">
-      <img src="agendo-logo.png?v=6" alt="AgendOrganizado">
+      <img src="agendo-logo.png?v=7" alt="AgendOrganizado">
       <div>
         <h1>Panel AgendO</h1>
         <div class="ap-subtitle">Plataforma multi-cliente · gestiona tus negocios</div>
@@ -545,7 +545,7 @@
 <nav id="topNav">
   <button type="button" id="navBackPanelBtn" onclick="exitToAgendoPanel()" title="Volver al Panel AgendO">← Panel</button>
   <div id="navBrand">
-    <img id="navAgendoLogo" src="agendo-logo.png?v=6" alt="AgendOrganizado">
+    <img id="navAgendoLogo" src="agendo-logo.png?v=7" alt="AgendOrganizado">
     <span id="navBrandPara" style="display:none;">para:</span>
     <img id="navLogo" src="" alt="logo">
     <span id="navName"></span>
@@ -730,7 +730,6 @@
       <div class="cfg-tab active" id="cfgTabClinica" onclick="switchCfgTab('clinica')">🏥 Clínica</div>
       <div class="cfg-tab" id="cfgTabUsuarios" onclick="switchCfgTab('usuarios')">👥 Colaboradores</div>
       <div class="cfg-tab" id="cfgTabBoxes" onclick="switchCfgTab('boxes')">📦 Boxes</div>
-      <div class="cfg-tab" id="cfgTabServicios" onclick="switchCfgTab('servicios')">💈 Servicios</div>
     </div>
     <div class="cfg-content">
     <!-- Tab: Clínica -->
@@ -762,6 +761,8 @@
     </div>
     <!-- Tab: Usuarios -->
     <div id="cfgSectionUsuarios" class="cfg-section hidden">
+    <!-- Vista principal: lista de colaboradores -->
+    <div id="usrMainView">
       <!-- Change admin password -->
       <div class="danger-zone">
         <h4>🔐 Contraseña de administrador</h4>
@@ -805,6 +806,19 @@
         <div id="addUserErr" style="font-size:11px;color:#dc2626;margin-top:6px;display:none;"></div>
         <span class="cfg-hint" style="margin-top:6px;display:block;">El PIN debe tener 4 dígitos. El email y WhatsApp son opcionales y se usan para enviar presupuestos.</span>
       </div>
+    </div><!-- /usrMainView -->
+    <!-- Sub-vista: servicios y precios de UN colaborador -->
+    <div id="usrServicesView" class="hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #e2e8f0;">
+        <button type="button" class="btn-outline" onclick="closeUserServices()" style="font-size:12px;padding:6px 12px;">← Volver a colaboradores</button>
+        <h4 id="usrServicesTitle" style="font-size:14px;color:#0f172a;font-weight:800;margin:0;text-align:right;">💈 Servicios y precios</h4>
+      </div>
+      <div id="svcAdminPane" style="padding:0;max-height:60vh;overflow-y:auto;"></div>
+      <div class="modal-ft" style="padding:10px 0 0;border:none;margin-top:14px;">
+        <button type="button" class="btn-cancel" onclick="closeUserServices()">Cancelar</button>
+        <button type="button" class="btn-save" onclick="saveUserServices()">Guardar precios</button>
+      </div>
+    </div>
     </div>
     <!-- Tab: Boxes -->
     <div id="cfgSectionBoxes" class="cfg-section hidden">
@@ -813,14 +827,6 @@
       <div class="modal-ft" style="padding:0;border:none;margin-top:14px;">
         <button type="button" class="btn-cancel" onclick="closeCfgModal()">Cancelar</button>
         <button type="button" class="btn-save" onclick="saveBoxesCfg()">Guardar nombres</button>
-      </div>
-    </div>
-    <!-- Tab: Servicios -->
-    <div id="cfgSectionServicios" class="cfg-section hidden" style="padding:0;">
-      <div id="svcAdminPane" style="padding:16px;max-height:60vh;overflow-y:auto;"></div>
-      <div class="modal-ft" style="flex-shrink:0;">
-        <button type="button" class="btn-cancel" onclick="closeCfgModal()">Cancelar</button>
-        <button type="button" class="btn-save" onclick="saveServiciosCfg()">Guardar precios</button>
       </div>
     </div>
     </div><!-- /cfg-content -->
@@ -1675,6 +1681,9 @@ function renderUsersList(){
   container.innerHTML = usersList.map(u => {
     const nSafe = escH(u.name);
     const aagOn = !!u.aagActive;
+    const nSvc = (u.services && Array.isArray(u.services))
+      ? u.services.reduce((s,c)=>s+(c.items?c.items.length:0),0)
+      : 0;
     return `
     <div class="user-row" style="flex-wrap:wrap;">
       <span class="user-row-name">👤 ${nSafe}</span>
@@ -1684,6 +1693,7 @@ function renderUsersList(){
         <span>AAG</span>
         <span class="${aagOn?'aag-icon-on':'aag-icon-off'}">${aagOn?'✓':'✗'}</span>
       </label>
+      <button type="button" class="btn-outline" style="font-size:11px;padding:5px 10px;" onclick="openUserServices('${nSafe}')" title="Servicios y precios de este colaborador">💈 Servicios${nSvc?` (${nSvc})`:''}</button>
       <button type="button" class="user-row-del" onclick="removeUser('${nSafe}')" title="Eliminar">🗑</button>
       <div style="flex-basis:100%;display:flex;gap:6px;margin-top:4px;">
         <input type="email" class="fi fi-sm" style="flex:2;font-size:11px;" placeholder="Email" value="${escH(u.email||'')}" onchange="updateUserContact('${nSafe}','email',this.value)">
@@ -2324,7 +2334,7 @@ function getClinicBrand(){
 
 // ── Config modal ──
 let cfgTab = 'clinica';
-const CFG_TABS = ['clinica','usuarios','boxes','servicios'];
+const CFG_TABS = ['clinica','usuarios','boxes'];
 function switchCfgTab(tab){
   cfgTab = tab;
   CFG_TABS.forEach(t=>{
@@ -2333,9 +2343,59 @@ function switchCfgTab(tab){
     if(sec) sec.classList.toggle('hidden',t!==tab);
     if(btn) btn.classList.toggle('active',t===tab);
   });
-  if(tab==='usuarios') renderUsersList();
+  // Al entrar a Colaboradores, asegurar que la sub-vista de servicios esté cerrada.
+  if(tab==='usuarios'){
+    closeUserServices && closeUserServices();
+    renderUsersList();
+  }
   if(tab==='boxes') renderBoxesCfg();
-  if(tab==='servicios'){ initSvcEditBuf(); renderSvcAdmin(); }
+}
+
+// ── Servicios por colaborador ──
+let currentSvcUserName = null;
+function openUserServices(userName){
+  const u = usersList.find(x => x.name === userName);
+  if(!u) return;
+  currentSvcUserName = userName;
+  // Inicializa el buffer de edición a partir de los servicios del colaborador
+  // (o del cliente activo, o del DEFAULT). De este modo cada colaborador parte
+  // de algo razonable y luego personaliza.
+  const active = (typeof getActiveClient === 'function') ? getActiveClient() : null;
+  const base = (u.services && Array.isArray(u.services) && u.services.length)
+    ? u.services
+    : ((active && active.services) || serviciosCfg || DEFAULT_SERVICIOS);
+  svcEditBuf = JSON.parse(JSON.stringify(base));
+  document.getElementById('usrMainView').classList.add('hidden');
+  document.getElementById('usrServicesView').classList.remove('hidden');
+  document.getElementById('usrServicesTitle').textContent = `💈 Servicios y precios · ${userName}`;
+  renderSvcAdmin();
+}
+function closeUserServices(){
+  currentSvcUserName = null;
+  const main = document.getElementById('usrMainView');
+  const sub  = document.getElementById('usrServicesView');
+  if(main) main.classList.remove('hidden');
+  if(sub)  sub.classList.add('hidden');
+  svcEditBuf = null;
+}
+function saveUserServices(){
+  if(!currentSvcUserName){ closeUserServices(); return; }
+  if(typeof svcFlushInputs === 'function') svcFlushInputs();
+  const cats = (svcEditBuf || []).map(cat => ({
+    ...cat,
+    items: (cat.items || []).filter(it =>
+      cat.tipo === 'sesiones'
+        ? (it.zona && it.zona.trim())
+        : (it.nombre && it.nombre.trim())
+    )
+  }));
+  const u = usersList.find(x => x.name === currentSvcUserName);
+  if(u){
+    u.services = cats;
+    saveAuth(); // persiste users + sync al cliente activo
+    renderUsersList();
+  }
+  closeUserServices();
 }
 
 function openCfgModal(){
